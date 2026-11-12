@@ -13,3 +13,4 @@ class GetUnsyncedRecordsUsecase {
     return await repository.getUnsyncedRecords();
   }
 }
+

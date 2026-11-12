@@ -12,3 +12,4 @@ class SyncAttendanceUsecase {
     return await repository.syncPendingRecords();
   }
 }
+

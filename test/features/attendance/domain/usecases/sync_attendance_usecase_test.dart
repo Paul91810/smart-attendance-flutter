@@ -48,3 +48,4 @@ void main() {
     verify(() => mockRepository.syncPendingRecords()).called(1);
   });
 }
+
