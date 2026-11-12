@@ -6,7 +6,8 @@ import 'package:intl/intl.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/di/injection_container.dart';
-import '../../../../core/responsive/responsive_layout.dart';
+import '../../../../core/network/connectivity_cubit.dart';
+import '../../../../core/responsive/responsive_breakpoints.dart';
 import '../../../../core/services/location_service.dart';
 import '../../../auth/domain/entities/user.dart';
 import '../../../qr_session/domain/entities/qr_session.dart';
@@ -14,6 +15,7 @@ import '../../domain/entities/attendance_record.dart';
 import '../bloc/attendance_bloc.dart';
 import '../bloc/attendance_event.dart';
 import '../bloc/attendance_state.dart';
+import '../bloc/sync/sync_cubit.dart';
 
 class EmployeeScanPage extends StatelessWidget {
   final User user;
@@ -71,6 +73,7 @@ class _EmployeeScanViewState extends State<_EmployeeScanView> {
 
   void _showSuccessDialog(BuildContext context, AttendanceRecord record) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final timeStr = DateFormat('hh:mm:ss a, dd MMM yyyy').format(record.timestamp);
 
     showDialog(
@@ -80,13 +83,23 @@ class _EmployeeScanViewState extends State<_EmployeeScanView> {
         icon: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.green.withValues(alpha: 0.15),
+            color: record.synced
+                ? Colors.green.withValues(alpha: 0.15)
+                : Colors.amber.withValues(alpha: 0.15),
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.check_circle_outline, color: Colors.green, size: 48),
+          child: Icon(
+            record.synced
+                ? Icons.check_circle_outline
+                : Icons.cloud_done_outlined,
+            color: record.synced ? Colors.green : Colors.amber.shade800,
+            size: 48,
+          ),
         ),
         title: Text(
-          '${record.type.displayName} Successful!',
+          record.synced
+              ? '${record.type.displayName} Successful!'
+              : '${record.type.displayName} Saved Offline!',
           textAlign: TextAlign.center,
           style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
@@ -109,8 +122,32 @@ class _EmployeeScanViewState extends State<_EmployeeScanView> {
             _buildDetailRow(
               context,
               'Status',
-              record.synced ? 'Validated & Saved' : 'Saved Locally',
+              record.synced ? 'Validated & Synced Online' : 'Saved Locally (Pending Sync)',
             ),
+            if (!record.synced) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.sync_rounded, size: 18, color: colorScheme.primary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Stored securely offline. Will sync to the server when online.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
         actions: [
@@ -118,6 +155,7 @@ class _EmployeeScanViewState extends State<_EmployeeScanView> {
             onPressed: () {
               Navigator.of(dialogCtx).pop();
               context.read<AttendanceBloc>().add(const ResetAttendanceState());
+              context.read<SyncCubit>().checkPendingCount();
             },
             child: const Text('Done'),
           ),
@@ -289,60 +327,394 @@ class _EmployeeScanViewState extends State<_EmployeeScanView> {
                 : AttendanceType.checkIn);
         final isProcessing = state is AttendanceProcessing;
 
+        final isExpanded = ResponsiveBreakpoints.isExpanded(context);
+
         return Scaffold(
           appBar: AppBar(
             title: const Text('Scan QR Attendance'),
             actions: [
-              IconButton(
-                icon: Icon(
-                  _isTorchOn ? Icons.flash_on : Icons.flash_off,
-                  color: _isTorchOn ? Colors.amber : null,
+              if (!isExpanded) ...[
+                IconButton(
+                  icon: Icon(
+                    _isTorchOn ? Icons.flash_on : Icons.flash_off,
+                    color: _isTorchOn ? Colors.amber : null,
+                  ),
+                  tooltip: 'Toggle Flashlight',
+                  onPressed: () async {
+                    await _controller.toggleTorch();
+                    setState(() {
+                      _isTorchOn = !_isTorchOn;
+                    });
+                  },
                 ),
-                tooltip: 'Toggle Flashlight',
-                onPressed: () async {
-                  await _controller.toggleTorch();
-                  setState(() {
-                    _isTorchOn = !_isTorchOn;
-                  });
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.flip_camera_android),
-                tooltip: 'Switch Camera',
-                onPressed: () => _controller.switchCamera(),
-              ),
+                IconButton(
+                  icon: const Icon(Icons.flip_camera_android),
+                  tooltip: 'Switch Camera',
+                  onPressed: () => _controller.switchCamera(),
+                ),
+              ],
             ],
           ),
-          body: ResponsiveLayout(
-            mobile: (context, constraints) => _buildScannerBody(
-              context,
-              theme,
-              colorScheme,
-              currentType,
-              isProcessing,
-            ),
-            tablet: (context, constraints) => Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 600),
-                child: _buildScannerBody(
+          body: isExpanded
+              ? _buildExpandedScannerLayout(
+                  context,
+                  theme,
+                  colorScheme,
+                  currentType,
+                  isProcessing,
+                )
+              : _buildScannerBody(
                   context,
                   theme,
                   colorScheme,
                   currentType,
                   isProcessing,
                 ),
+          bottomNavigationBar: isExpanded
+              ? null
+              : _buildBottomActions(
+                  context,
+                  theme,
+                  colorScheme,
+                  currentType,
+                  isProcessing,
+                ),
+        );
+      },
+    );
+  }
+
+  /// Tablet landscape expanded layout (side-by-side scanner and controls)
+  Widget _buildExpandedScannerLayout(
+    BuildContext context,
+    ThemeData theme,
+    ColorScheme colorScheme,
+    AttendanceType currentType,
+    bool isProcessing,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.all(20.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Left (flex: 5): Camera Preview with overlay & controls
+          Expanded(
+            flex: 5,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  MobileScanner(
+                    controller: _controller,
+                    onDetect: _onDetect,
+                    errorBuilder: (context, error) {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.videocam_off_outlined,
+                                  size: 56, color: colorScheme.error),
+                              const SizedBox(height: 12),
+                              Text('Camera Preview Unavailable',
+                                  style: theme.textTheme.titleMedium),
+                              const SizedBox(height: 6),
+                              Text(
+                                'Use the simulation controls on the right to test check-in and check-out.',
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  _ScannerOverlay(
+                    borderColor: colorScheme.primary,
+                    isProcessing: isProcessing,
+                  ),
+                  // Camera controls overlay
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              _isTorchOn ? Icons.flash_on : Icons.flash_off,
+                              color: _isTorchOn ? Colors.amber : Colors.white,
+                            ),
+                            onPressed: () async {
+                              await _controller.toggleTorch();
+                              setState(() => _isTorchOn = !_isTorchOn);
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.flip_camera_android,
+                                color: Colors.white),
+                            onPressed: () => _controller.switchCamera(),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (isProcessing)
+                    Positioned(
+                      bottom: 20,
+                      left: 20,
+                      right: 20,
+                      child: Card(
+                        color: colorScheme.surface.withValues(alpha: 0.95),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          child: Row(
+                            children: [
+                              const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2.5),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                'Validating QR & GPS...',
+                                style: theme.textTheme.titleSmall
+                                    ?.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
           ),
-          bottomNavigationBar: _buildBottomActions(
-            context,
-            theme,
-            colorScheme,
-            currentType,
-            isProcessing,
+          const SizedBox(width: 24),
+          // Right (flex: 6): Attendance Controls, Status, Simulation
+          Expanded(
+            flex: 6,
+            child: Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(color: colorScheme.outlineVariant),
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Attendance Check',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Select mode and scan the admin live QR code to mark attendance.',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SegmentedButton<AttendanceType>(
+                      segments: const [
+                        ButtonSegment<AttendanceType>(
+                          value: AttendanceType.checkIn,
+                          label: Text('Check In'),
+                          icon: Icon(Icons.login),
+                        ),
+                        ButtonSegment<AttendanceType>(
+                          value: AttendanceType.checkOut,
+                          label: Text('Check Out'),
+                          icon: Icon(Icons.logout),
+                        ),
+                      ],
+                      selected: {currentType},
+                      onSelectionChanged: isProcessing
+                          ? null
+                          : (Set<AttendanceType> selection) {
+                              context
+                                  .read<AttendanceBloc>()
+                                  .add(ModeChanged(selection.first));
+                            },
+                    ),
+                    const SizedBox(height: 20),
+                    // Offline simulation switch in right pane
+                    BlocBuilder<ConnectivityCubit, ConnectivityState>(
+                      builder: (context, connState) {
+                        return Card(
+                          elevation: 0,
+                          color: connState.isOffline
+                              ? colorScheme.errorContainer.withValues(alpha: 0.3)
+                              : colorScheme.surfaceContainerHighest,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(
+                              color: connState.isOffline
+                                  ? colorScheme.error.withValues(alpha: 0.5)
+                                  : colorScheme.outlineVariant,
+                            ),
+                          ),
+                          child: SwitchListTile(
+                            secondary: Icon(
+                              connState.isOffline
+                                  ? Icons.wifi_off_rounded
+                                  : Icons.wifi_rounded,
+                              color: connState.isOffline
+                                  ? colorScheme.error
+                                  : colorScheme.primary,
+                            ),
+                            title: Text(
+                              'Simulate Offline Mode',
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: Text(
+                              connState.isOffline
+                                  ? 'Offline active: Saves to SQLite locally'
+                                  : 'Online active: Verifies with server API',
+                              style: theme.textTheme.bodySmall,
+                            ),
+                            value: connState.isOffline,
+                            onChanged: (val) {
+                              context
+                                  .read<ConnectivityCubit>()
+                                  .setSimulateOffline(val);
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    // Sync status & action if pending
+                    BlocBuilder<SyncCubit, SyncState>(
+                      builder: (context, syncState) {
+                        if (syncState.pendingCount == 0) {
+                          return const SizedBox.shrink();
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16.0),
+                          child: FilledButton.tonalIcon(
+                            onPressed: syncState is SyncInProgress
+                                ? null
+                                : () =>
+                                    context.read<SyncCubit>().syncRecords(),
+                            icon: syncState is SyncInProgress
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2),
+                                  )
+                                : const Icon(Icons.sync_rounded),
+                            label: Text(
+                              syncState is SyncInProgress
+                                  ? 'Syncing...'
+                                  : 'Sync Now (${syncState.pendingCount} pending)',
+                            ),
+                            style: FilledButton.styleFrom(
+                              minimumSize: const Size.fromHeight(44),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    // Debug simulation shortcuts
+                    Text(
+                      'Simulation Scenarios',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        ActionChip(
+                          avatar: const Icon(Icons.check,
+                              size: 16, color: Colors.green),
+                          label: const Text('Valid QR'),
+                          onPressed: isProcessing
+                              ? null
+                              : () {
+                                  final p = _generateTestPayload(
+                                      isExpired: false, isTampered: false);
+                                  context
+                                      .read<AttendanceBloc>()
+                                      .add(ScanReceived(p));
+                                },
+                        ),
+                        ActionChip(
+                          avatar: Icon(Icons.timer_off,
+                              size: 16, color: colorScheme.error),
+                          label: const Text('Expired QR'),
+                          onPressed: isProcessing
+                              ? null
+                              : () {
+                                  final p = _generateTestPayload(
+                                      isExpired: true, isTampered: false);
+                                  context
+                                      .read<AttendanceBloc>()
+                                      .add(ScanReceived(p));
+                                },
+                        ),
+                        ActionChip(
+                          avatar: Icon(Icons.gavel,
+                              size: 16, color: colorScheme.error),
+                          label: const Text('Tampered QR'),
+                          onPressed: isProcessing
+                              ? null
+                              : () {
+                                  final p = _generateTestPayload(
+                                      isExpired: false, isTampered: true);
+                                  context
+                                      .read<AttendanceBloc>()
+                                      .add(ScanReceived(p));
+                                },
+                        ),
+                        ActionChip(
+                          avatar: Icon(Icons.replay,
+                              size: 16, color: Colors.amber.shade800),
+                          label: const Text('Reused Nonce'),
+                          onPressed: isProcessing
+                              ? null
+                              : () {
+                                  final p = _generateTestPayload(
+                                    isExpired: false,
+                                    isTampered: false,
+                                    fixedNonce: 'reused-nonce-static-12345',
+                                  );
+                                  context
+                                      .read<AttendanceBloc>()
+                                      .add(ScanReceived(p));
+                                },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 
@@ -558,7 +930,35 @@ class _EmployeeScanViewState extends State<_EmployeeScanView> {
                     color: colorScheme.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
+
+                // Offline simulation toggle
+                BlocBuilder<ConnectivityCubit, ConnectivityState>(
+                  builder: (context, connState) {
+                    return SwitchListTile(
+                      secondary: Icon(
+                        connState.isOffline
+                            ? Icons.wifi_off_rounded
+                            : Icons.wifi_rounded,
+                        color: connState.isOffline
+                            ? colorScheme.error
+                            : colorScheme.primary,
+                      ),
+                      title: const Text('Simulate Offline Mode'),
+                      subtitle: Text(connState.isOffline
+                          ? 'Offline: Saves to local SQLite database'
+                          : 'Online: Verifies and syncs with server API'),
+                      value: connState.isOffline,
+                      onChanged: (val) {
+                        parentContext
+                            .read<ConnectivityCubit>()
+                            .setSimulateOffline(val);
+                      },
+                    );
+                  },
+                ),
+                const Divider(),
+                const SizedBox(height: 8),
 
                 // Scenario 1: Valid QR
                 ListTile(

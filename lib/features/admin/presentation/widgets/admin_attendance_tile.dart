@@ -6,11 +6,13 @@ import '../../domain/entities/admin_attendance_record.dart';
 class AdminAttendanceTile extends StatelessWidget {
   final AdminAttendanceRecord record;
   final VoidCallback? onTap;
+  final bool isSelected;
 
   const AdminAttendanceTile({
     super.key,
     required this.record,
     this.onTap,
+    this.isSelected = false,
   });
 
   @override
@@ -32,10 +34,16 @@ class AdminAttendanceTile extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8.0),
-      elevation: 0,
+      elevation: isSelected ? 1 : 0,
+      color: isSelected
+          ? colorScheme.primaryContainer.withValues(alpha: 0.25)
+          : null,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: colorScheme.outlineVariant),
+        side: BorderSide(
+          color: isSelected ? colorScheme.primary : colorScheme.outlineVariant,
+          width: isSelected ? 1.5 : 1.0,
+        ),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),

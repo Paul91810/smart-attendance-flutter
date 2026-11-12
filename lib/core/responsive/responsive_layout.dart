@@ -1,26 +1,79 @@
 import 'package:flutter/material.dart';
 import 'responsive_breakpoints.dart';
 
-/// Adaptive layout builder preparing the app for multi-screen support in Phase 4.
+typedef ResponsiveWidgetBuilder = Widget Function(
+  BuildContext context,
+  BoxConstraints constraints,
+);
+
+/// Adaptive layout builder supporting Compact (<600), Medium (600-900), and Expanded (>900).
 class ResponsiveLayout extends StatelessWidget {
-  final Widget Function(BuildContext context, BoxConstraints constraints) mobile;
-  final Widget Function(BuildContext context, BoxConstraints constraints)? tablet;
+  final ResponsiveWidgetBuilder? compact;
+  final ResponsiveWidgetBuilder? medium;
+  final ResponsiveWidgetBuilder? expanded;
+
+  // Backwards compatibility aliases for existing phase code
+  final ResponsiveWidgetBuilder? mobile;
+  final ResponsiveWidgetBuilder? tablet;
 
   const ResponsiveLayout({
     super.key,
-    required this.mobile,
+    this.compact,
+    this.medium,
+    this.expanded,
+    this.mobile,
     this.tablet,
-  });
+  }) : assert(
+          compact != null || mobile != null,
+          'Either compact or mobile builder must be provided',
+        );
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth >= ResponsiveBreakpoints.mobileMax && tablet != null) {
-          return tablet!(context, constraints);
+        final width = constraints.maxWidth;
+
+        if (width > ResponsiveBreakpoints.mediumMax) {
+          if (expanded != null) return expanded!(context, constraints);
+          if (medium != null) return medium!(context, constraints);
+          if (tablet != null) return tablet!(context, constraints);
+        } else if (width >= ResponsiveBreakpoints.compactMax) {
+          if (medium != null) return medium!(context, constraints);
+          if (tablet != null) return tablet!(context, constraints);
+          if (expanded != null) return expanded!(context, constraints);
         }
-        return mobile(context, constraints);
+
+        final defaultCompact = compact ?? mobile!;
+        return defaultCompact(context, constraints);
       },
+    );
+  }
+}
+
+/// Helper widget to center and constrain content on wide screens.
+class ResponsiveContent extends StatelessWidget {
+  final Widget child;
+  final double maxWidth;
+  final EdgeInsetsGeometry padding;
+
+  const ResponsiveContent({
+    super.key,
+    required this.child,
+    this.maxWidth = ResponsiveBreakpoints.maxContentWidth,
+    this.padding = const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxWidth),
+        child: Padding(
+          padding: padding,
+          child: child,
+        ),
+      ),
     );
   }
 }

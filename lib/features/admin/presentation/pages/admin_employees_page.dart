@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/responsive/responsive_breakpoints.dart';
+import '../../../../core/widgets/error_view.dart';
 import '../bloc/admin_dashboard_bloc.dart';
+import '../bloc/admin_dashboard_event.dart';
 import '../bloc/admin_dashboard_state.dart';
 import 'admin_employee_detail_page.dart';
 
@@ -26,11 +28,14 @@ class AdminEmployeesPage extends StatelessWidget {
           }
 
           if (state is AdminDashboardFailure) {
-            return Center(
-              child: Text(
-                state.message,
-                style: TextStyle(color: colorScheme.error),
-              ),
+            return ErrorView(
+              title: 'Failed to Load Employees',
+              message: state.message,
+              onRetry: () {
+                context
+                    .read<AdminDashboardBloc>()
+                    .add(const LoadAdminDashboard());
+              },
             );
           }
 
@@ -45,8 +50,125 @@ class AdminEmployeesPage extends StatelessWidget {
 
             return LayoutBuilder(
               builder: (context, constraints) {
+                final isExpanded =
+                    constraints.maxWidth >= ResponsiveBreakpoints.mediumMax;
                 final isWide =
                     constraints.maxWidth >= ResponsiveBreakpoints.mobileMax;
+
+                if (isExpanded) {
+                  return Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: ResponsiveBreakpoints.maxExpandedContentWidth,
+                      ),
+                      child: GridView.builder(
+                        padding: const EdgeInsets.all(20.0),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 2.8,
+                        ),
+                        itemCount: employees.length,
+                        itemBuilder: (context, index) {
+                          final emp = employees[index];
+                          final initial = emp.name.isNotEmpty
+                              ? emp.name[0].toUpperCase()
+                              : 'E';
+
+                          return Card(
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              side: BorderSide(
+                                color: colorScheme.outlineVariant,
+                              ),
+                            ),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(16),
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => AdminEmployeeDetailPage(
+                                      employee: emp,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0,
+                                  vertical: 12.0,
+                                ),
+                                child: Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 26,
+                                      backgroundColor:
+                                          colorScheme.primaryContainer,
+                                      child: Text(
+                                        initial,
+                                        style: theme.textTheme.titleMedium
+                                            ?.copyWith(
+                                          color: colorScheme
+                                              .onPrimaryContainer,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            emp.name,
+                                            style: theme
+                                                .textTheme.titleMedium
+                                                ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            '${emp.employeeId} • ${emp.department}',
+                                            style: theme.textTheme.bodySmall
+                                                ?.copyWith(
+                                              color: colorScheme
+                                                  .onSurfaceVariant,
+                                            ),
+                                          ),
+                                          Text(
+                                            emp.email,
+                                            style: theme.textTheme.bodySmall
+                                                ?.copyWith(
+                                              color: colorScheme
+                                                  .onSurfaceVariant,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.chevron_right_rounded,
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  );
+                }
 
                 return Center(
                   child: ConstrainedBox(
