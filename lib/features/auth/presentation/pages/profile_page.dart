@@ -22,6 +22,16 @@ class ProfilePage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Profile'),
+        actions: [
+          IconButton(
+            icon: Icon(
+              Icons.logout_rounded,
+              color: colorScheme.error,
+            ),
+            tooltip: 'Log Out',
+            onPressed: () => _showLogoutConfirmationDialog(context),
+          ),
+        ],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -182,23 +192,24 @@ class ProfilePage extends StatelessWidget {
                   ),
                   const SizedBox(height: 32),
 
-                  // Sign Out Button
+                  // Log Out Button
                   FilledButton.tonalIcon(
                     icon: Icon(
                       Icons.logout_rounded,
                       color: colorScheme.error,
                     ),
                     label: Text(
-                      'Sign Out',
-                      style: TextStyle(color: colorScheme.error),
+                      'Log Out',
+                      style: TextStyle(
+                        color: colorScheme.error,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       backgroundColor: colorScheme.errorContainer.withValues(alpha: 0.4),
                     ),
-                    onPressed: () {
-                      context.read<AuthBloc>().add(const LogoutRequested());
-                    },
+                    onPressed: () => _showLogoutConfirmationDialog(context),
                   ),
                 ],
               ),
@@ -207,5 +218,46 @@ class ProfilePage extends StatelessWidget {
         },
       ),
     );
+  }
+
+  /// Displays a confirmation dialog asking the user to confirm logging out.
+  /// If the user taps 'Back', the dialog is dismissed.
+  /// If the user taps 'Log Out', [LogoutRequested] is dispatched to [AuthBloc].
+  Future<void> _showLogoutConfirmationDialog(BuildContext context) async {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          icon: Icon(
+            Icons.logout_rounded,
+            color: colorScheme.error,
+            size: 32,
+          ),
+          title: const Text('Log Out'),
+          content: const Text('Do you want to log out?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Back'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: colorScheme.error,
+                foregroundColor: colorScheme.onError,
+              ),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Log Out'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldLogout == true && context.mounted) {
+      context.read<AuthBloc>().add(const LogoutRequested());
+    }
   }
 }
