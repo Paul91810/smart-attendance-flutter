@@ -3,10 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/responsive/responsive_breakpoints.dart';
+import '../../../../core/widgets/error_view.dart';
 import '../../domain/entities/attendance_record.dart';
 import '../bloc/history/history_bloc.dart';
 import '../bloc/history/history_event.dart';
 import '../bloc/history/history_state.dart';
+import '../bloc/sync/sync_cubit.dart';
 
 class EmployeeHistoryPage extends StatelessWidget {
   const EmployeeHistoryPage({super.key});
@@ -17,6 +19,31 @@ class EmployeeHistoryPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('My Attendance History'),
         actions: [
+          BlocBuilder<SyncCubit, SyncState>(
+            builder: (context, syncState) {
+              if (syncState.pendingCount == 0) {
+                return const SizedBox.shrink();
+              }
+              return IconButton(
+                icon: Badge.count(
+                  count: syncState.pendingCount,
+                  child: syncState is SyncInProgress
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.sync_rounded),
+                ),
+                tooltip: 'Sync ${syncState.pendingCount} offline records',
+                onPressed: syncState is SyncInProgress
+                    ? null
+                    : () {
+                        context.read<SyncCubit>().syncRecords();
+                      },
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             tooltip: 'Refresh',
@@ -204,47 +231,12 @@ class EmployeeHistoryPage extends StatelessWidget {
   }
 
   Widget _buildErrorState(BuildContext context, HistoryFailure state) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline_rounded,
-              size: 64,
-              color: colorScheme.error,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Unable to Load History',
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: colorScheme.error,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              state.message,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Retry'),
-              onPressed: () {
-                context.read<HistoryBloc>().add(const LoadHistory());
-              },
-            ),
-          ],
-        ),
-      ),
+    return ErrorView(
+      title: 'Unable to Load History',
+      message: state.message,
+      onRetry: () {
+        context.read<HistoryBloc>().add(const LoadHistory());
+      },
     );
   }
 

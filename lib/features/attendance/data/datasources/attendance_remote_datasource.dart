@@ -15,6 +15,7 @@ abstract class AttendanceRemoteDataSource {
 
   Future<List<AttendanceRecordModel>> getAttendanceHistory();
   Future<List<AttendanceRecordModel>> getMyAttendanceHistory();
+  Future<AttendanceRecordModel> uploadOfflineRecord(AttendanceRecord record);
 }
 
 class AttendanceRemoteDataSourceImpl implements AttendanceRemoteDataSource {
@@ -105,6 +106,38 @@ class AttendanceRemoteDataSourceImpl implements AttendanceRemoteDataSource {
     } catch (e) {
       throw ServerException(
           message: 'Unexpected error fetching personal attendance history: $e');
+    }
+  }
+
+  @override
+  Future<AttendanceRecordModel> uploadOfflineRecord(
+      AttendanceRecord record) async {
+    try {
+      final response = await dioClient.post(
+        ApiEndpoints.attendanceRecord,
+        data: {
+          'employeeId': record.employeeId,
+          'type': record.type.toTypeString(),
+          'timestamp': record.timestamp.toIso8601String(),
+          'latitude': record.latitude,
+          'longitude': record.longitude,
+          'sessionId': record.sessionId,
+          'synced': true,
+        },
+      );
+      final data = response.data['data'] as Map<String, dynamic>;
+      return AttendanceRecordModel.fromJson(data);
+    } on DioException catch (e) {
+      if (e.response?.data is Map<String, dynamic>) {
+        final err = e.response!.data as Map<String, dynamic>;
+        throw ServerException(
+          message: err['message'] as String? ?? 'Failed to upload offline record',
+          code: err['code'] as String?,
+        );
+      }
+      throw ServerException(message: e.message ?? 'Upload request failed');
+    } catch (e) {
+      throw ServerException(message: 'Error uploading offline record: $e');
     }
   }
 }

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/di/injection_container.dart';
+import 'core/network/connectivity_cubit.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_cubit.dart';
 import 'core/theme/theme_state.dart';
+import 'features/attendance/presentation/bloc/sync/sync_cubit.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/presentation/bloc/auth_event.dart';
 import 'features/auth/presentation/pages/splash_page.dart';
@@ -25,21 +27,35 @@ class SmartAttendanceApp extends StatelessWidget {
         BlocProvider<ThemeCubit>(
           create: (_) => sl<ThemeCubit>(),
         ),
+        BlocProvider<ConnectivityCubit>(
+          create: (_) => sl<ConnectivityCubit>(),
+        ),
+        BlocProvider<SyncCubit>(
+          create: (_) => sl<SyncCubit>(),
+        ),
         BlocProvider<AuthBloc>(
           create: (_) => sl<AuthBloc>()..add(const AppStarted()),
         ),
       ],
-      child: BlocBuilder<ThemeCubit, ThemeState>(
-        builder: (context, state) {
-          return MaterialApp(
-            title: 'Smart Attendance',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: state.themeMode,
-            home: const SplashPage(),
-          );
+      child: BlocListener<ConnectivityCubit, ConnectivityState>(
+        listenWhen: (previous, current) =>
+            previous.isOffline && current.isOnline,
+        listener: (context, state) {
+          // When returning online, automatically attempt to sync any pending records
+          context.read<SyncCubit>().syncRecords();
         },
+        child: BlocBuilder<ThemeCubit, ThemeState>(
+          builder: (context, state) {
+            return MaterialApp(
+              title: 'Smart Attendance',
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: state.themeMode,
+              home: const SplashPage(),
+            );
+          },
+        ),
       ),
     );
   }

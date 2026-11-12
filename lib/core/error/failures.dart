@@ -33,6 +33,14 @@ class NetworkFailure extends Failure {
   ]) : super(code: code);
 }
 
+/// Returned when a network request times out.
+class TimeoutFailure extends Failure {
+  const TimeoutFailure([
+    super.message = 'Connection timed out. Please try again.',
+    String? code = 'TIMEOUT',
+  ]) : super(code: code);
+}
+
 /// Returned when local caching / persistence fails.
 class CacheFailure extends Failure {
   const CacheFailure(super.message, {super.code});

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 import 'package:dio/dio.dart';
 import '../constants/app_constants.dart';
@@ -33,6 +34,26 @@ class MockApiInterceptor extends Interceptor {
     // Ensure mock data is seeded
     MockAttendanceStore.seedInitialDataIfEmpty();
 
+    // Check simulation toggles for offline and server errors
+    if (MockAttendanceStore.simulateOffline) {
+      return handler.reject(
+        DioException(
+          requestOptions: options,
+          type: DioExceptionType.connectionError,
+          error: 'No internet connection (Simulated Offline Mode)',
+        ),
+      );
+    }
+
+    if (MockAttendanceStore.simulateServerError) {
+      return respondServerError(
+        options,
+        handler,
+        code: 'SIMULATED_500',
+        message: 'Internal server error (Simulated 500 Failure)',
+      );
+    }
+
     final path = options.path;
     final method = options.method.toUpperCase();
 
@@ -48,6 +69,8 @@ class MockApiInterceptor extends Interceptor {
         return _handleGenerateQrSession(options, handler);
       } else if (path.endsWith('/attendance/scan') && method == 'POST') {
         return await _handleAttendanceScan(options, handler);
+      } else if (path.endsWith('/attendance/record') && method == 'POST') {
+        return _handleUploadAttendanceRecord(options, handler);
       } else if (path.endsWith('/attendance/me') && method == 'GET') {
         return _handleGetMyAttendance(options, handler);
       } else if (path.endsWith('/attendance/history') && method == 'GET') {
@@ -427,6 +450,87 @@ class MockApiInterceptor extends Interceptor {
         .toList();
 
     return respondSuccess(options, handler, data: data);
+  }
+
+  /// POST /attendance/record: Uploads an offline-recorded attendance item and marks it synced.
+  void _handleUploadAttendanceRecord(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) {
+    final user = _getAuthenticatedUser(options);
+    if (user == null) {
+      return respondUnauthorized(options, handler);
+    }
+
+    final data = options.data is Map<String, dynamic>
+        ? options.data as Map<String, dynamic>
+        : jsonDecode(options.data.toString()) as Map<String, dynamic>;
+
+    final employeeId = data['employeeId'] as String? ?? user.employeeId;
+    final typeStr = data['type'] as String? ?? 'CHECK_IN';
+    final type = AttendanceType.fromString(typeStr);
+    final timestamp = data['timestamp'] != null
+        ? DateTime.parse(data['timestamp'] as String)
+        : DateTime.now();
+    final latitude = (data['latitude'] as num?)?.toDouble() ?? 0.0;
+    final longitude = (data['longitude'] as num?)?.toDouble() ?? 0.0;
+    final sessionId = data['sessionId'] as String? ?? 'OFFLINE-SYNC';
+
+    // Prevent duplicate upload if same sessionId + employeeId + type already exists
+    final alreadyExists = MockAttendanceStore.recordedAttendance.any((r) =>
+        r.employeeId == employeeId &&
+        r.type == type &&
+        r.timestamp.year == timestamp.year &&
+        r.timestamp.month == timestamp.month &&
+        r.timestamp.day == timestamp.day);
+
+    if (alreadyExists) {
+      final existing = MockAttendanceStore.recordedAttendance.firstWhere((r) =>
+          r.employeeId == employeeId &&
+          r.type == type &&
+          r.timestamp.year == timestamp.year &&
+          r.timestamp.month == timestamp.month &&
+          r.timestamp.day == timestamp.day);
+      return respondSuccess(options, handler, data: {
+        'id': existing.id,
+        'employeeId': existing.employeeId,
+        'type': existing.type.toTypeString(),
+        'timestamp': existing.timestamp.toIso8601String(),
+        'latitude': existing.latitude,
+        'longitude': existing.longitude,
+        'sessionId': existing.sessionId,
+        'synced': true,
+      });
+    }
+
+    final newId = MockAttendanceStore.recordedAttendance.length + 1;
+    final record = AttendanceRecord(
+      id: newId,
+      employeeId: employeeId,
+      type: type,
+      timestamp: timestamp,
+      latitude: latitude,
+      longitude: longitude,
+      sessionId: sessionId,
+      synced: true,
+    );
+    MockAttendanceStore.recordedAttendance.add(record);
+
+    return respondSuccess(
+      options,
+      handler,
+      statusCode: 201,
+      data: {
+        'id': record.id,
+        'employeeId': record.employeeId,
+        'type': record.type.toTypeString(),
+        'timestamp': record.timestamp.toIso8601String(),
+        'latitude': record.latitude,
+        'longitude': record.longitude,
+        'sessionId': record.sessionId,
+        'synced': true,
+      },
+    );
   }
 
   /// GET /admin/employees: Returns all employees (admin only).

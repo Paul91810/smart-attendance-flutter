@@ -15,5 +15,9 @@ abstract class AttendanceRepository {
   });
 
   Future<Result<Failure, List<AttendanceRecord>>> getMyAttendanceHistory();
+
+  Future<Result<Failure, List<AttendanceRecord>>> getUnsyncedRecords();
+
+  Future<Result<Failure, int>> syncPendingRecords();
 }
 

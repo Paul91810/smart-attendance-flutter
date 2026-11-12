@@ -5,6 +5,7 @@ import 'package:get_it/get_it.dart';
 import '../database/database_helper.dart';
 import '../network/app_config.dart';
 import '../network/auth_interceptor.dart';
+import '../network/connectivity_cubit.dart';
 import '../network/dio_client.dart';
 import '../network/network_info.dart';
 import '../services/location_service.dart';
@@ -30,9 +31,12 @@ import '../../features/attendance/data/datasources/attendance_remote_datasource.
 import '../../features/attendance/data/repositories/attendance_repository_impl.dart';
 import '../../features/attendance/domain/repositories/attendance_repository.dart';
 import '../../features/attendance/domain/usecases/get_my_attendance_history_usecase.dart';
+import '../../features/attendance/domain/usecases/get_unsynced_records_usecase.dart';
 import '../../features/attendance/domain/usecases/mark_attendance_usecase.dart';
+import '../../features/attendance/domain/usecases/sync_attendance_usecase.dart';
 import '../../features/attendance/presentation/bloc/attendance_bloc.dart';
 import '../../features/attendance/presentation/bloc/history/history_bloc.dart';
+import '../../features/attendance/presentation/bloc/sync/sync_cubit.dart';
 
 import '../../features/admin/data/datasources/admin_remote_datasource.dart';
 import '../../features/admin/data/repositories/admin_repository_impl.dart';
@@ -72,8 +76,11 @@ Future<void> initDependencies() async {
     ),
   );
 
-  // Theme
+  // Theme & Connectivity
   sl.registerFactory<ThemeCubit>(() => ThemeCubit());
+  sl.registerFactory<ConnectivityCubit>(
+    () => ConnectivityCubit(networkInfo: sl()),
+  );
 
   // ===================== Auth Feature =====================
   // Data Sources
@@ -161,6 +168,12 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<GetMyAttendanceHistoryUsecase>(
     () => GetMyAttendanceHistoryUsecase(sl()),
   );
+  sl.registerLazySingleton<GetUnsyncedRecordsUsecase>(
+    () => GetUnsyncedRecordsUsecase(sl()),
+  );
+  sl.registerLazySingleton<SyncAttendanceUsecase>(
+    () => SyncAttendanceUsecase(sl()),
+  );
 
   // BLoC
   sl.registerFactory<AttendanceBloc>(
@@ -172,6 +185,12 @@ Future<void> initDependencies() async {
   sl.registerFactory<HistoryBloc>(
     () => HistoryBloc(
       getMyAttendanceHistoryUsecase: sl(),
+    ),
+  );
+  sl.registerFactory<SyncCubit>(
+    () => SyncCubit(
+      syncAttendanceUsecase: sl(),
+      getUnsyncedRecordsUsecase: sl(),
     ),
   );
 
