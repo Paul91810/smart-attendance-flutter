@@ -13,5 +13,7 @@ abstract class AttendanceRepository {
   Future<Result<Failure, List<AttendanceRecord>>> getAttendanceHistory({
     required String employeeId,
   });
+
+  Future<Result<Failure, List<AttendanceRecord>>> getMyAttendanceHistory();
 }
 

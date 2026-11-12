@@ -14,6 +14,7 @@ abstract class AttendanceRemoteDataSource {
   });
 
   Future<List<AttendanceRecordModel>> getAttendanceHistory();
+  Future<List<AttendanceRecordModel>> getMyAttendanceHistory();
 }
 
 class AttendanceRemoteDataSourceImpl implements AttendanceRemoteDataSource {
@@ -78,6 +79,32 @@ class AttendanceRemoteDataSourceImpl implements AttendanceRemoteDataSource {
     } catch (e) {
       throw ServerException(
           message: 'Unexpected error fetching attendance history: $e');
+    }
+  }
+
+  @override
+  Future<List<AttendanceRecordModel>> getMyAttendanceHistory() async {
+    try {
+      final response = await dioClient.get(ApiEndpoints.attendanceMe);
+      final list = response.data['data'] as List<dynamic>;
+      return list
+          .map((item) =>
+              AttendanceRecordModel.fromJson(item as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      if (e.response?.data is Map<String, dynamic>) {
+        final errData = e.response!.data as Map<String, dynamic>;
+        throw ServerException(
+          message: errData['message'] as String? ??
+              'Failed to retrieve personal attendance history',
+          code: errData['code'] as String?,
+        );
+      }
+      throw ServerException(
+          message: e.message ?? 'Personal attendance history request failed');
+    } catch (e) {
+      throw ServerException(
+          message: 'Unexpected error fetching personal attendance history: $e');
     }
   }
 }

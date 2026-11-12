@@ -2,6 +2,7 @@ import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import '../../../../core/network/network_info.dart';
+import '../../../auth/data/datasources/auth_local_datasource.dart';
 import '../../domain/entities/attendance_record.dart';
 import '../../domain/repositories/attendance_repository.dart';
 import '../datasources/attendance_local_datasource.dart';
@@ -12,11 +13,13 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
   final AttendanceRemoteDataSource remoteDataSource;
   final AttendanceLocalDataSource localDataSource;
   final NetworkInfo networkInfo;
+  final AuthLocalDataSource? authLocalDataSource;
 
   AttendanceRepositoryImpl({
     required this.remoteDataSource,
     required this.localDataSource,
     required this.networkInfo,
+    this.authLocalDataSource,
   });
 
   @override
@@ -101,6 +104,47 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
       return Result.failure(CacheFailure(e.message));
     } catch (e) {
       return Result.failure(ServerFailure('Failed to load history: $e'));
+    }
+  }
+
+  @override
+  Future<Result<Failure, List<AttendanceRecord>>> getMyAttendanceHistory() async {
+    try {
+      final isConnected = await networkInfo.isConnected;
+      if (isConnected) {
+        try {
+          final remoteRecords = await remoteDataSource.getMyAttendanceHistory();
+          return Result.success(remoteRecords);
+        } on ServerException catch (e) {
+          if (e.code == 'UNAUTHORIZED') {
+            return Result.failure(AuthFailure(e.message, code: e.code));
+          }
+          // On other server errors, try local cache fallback
+        } catch (_) {
+          // Fall back to local SQLite below
+        }
+      }
+
+      if (authLocalDataSource != null) {
+        final cachedUser = await authLocalDataSource!.getCachedUser();
+        if (cachedUser != null) {
+          final localRecords =
+              await localDataSource.getAttendanceHistory(cachedUser.employeeId);
+          return Result.success(localRecords);
+        }
+      }
+
+      if (!isConnected) {
+        return const Result.failure(
+          NetworkFailure('No network connection and no cached records available.'),
+        );
+      }
+
+      return const Result.success([]);
+    } on CacheException catch (e) {
+      return Result.failure(CacheFailure(e.message));
+    } catch (e) {
+      return Result.failure(ServerFailure('Failed to load personal history: $e'));
     }
   }
 }
