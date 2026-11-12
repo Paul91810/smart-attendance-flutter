@@ -51,3 +51,23 @@ class NotFoundException implements Exception {
   @override
   String toString() => 'NotFoundException($message)';
 }
+
+class QrValidationException implements Exception {
+  final String message;
+  final String? code;
+
+  const QrValidationException({required this.message, this.code});
+
+  @override
+  String toString() => 'QrValidationException(code: $code, message: $message)';
+}
+
+class LocationException implements Exception {
+  final String message;
+  final String? code;
+
+  const LocationException({required this.message, this.code});
+
+  @override
+  String toString() => 'LocationException(code: $code, message: $message)';
+}

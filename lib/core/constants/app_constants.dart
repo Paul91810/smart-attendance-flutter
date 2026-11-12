@@ -5,9 +5,12 @@ class AppConstants {
   static const String appName = 'Smart Attendance';
   static const String appVersion = '1.0.0';
 
-  // QR Session constants (for Phase 2)
+  // QR Session constants
   static const int qrExpirySeconds = 60;
   static const int mockLatencyMs = 600;
+
+  /// Secret key used for signing and verifying dynamic QR sessions using HMAC-SHA256.
+  static const String hmacSecret = 'smart_attendance_hmac_secret_key_2026';
 
   // Pagination / defaults
   static const int defaultPageSize = 20;

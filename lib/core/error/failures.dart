@@ -47,3 +47,13 @@ class ValidationFailure extends Failure {
 class NotFoundFailure extends Failure {
   const NotFoundFailure(super.message, {super.code});
 }
+
+/// Returned when QR validation fails (signature, expiry, replay, etc.).
+class QrValidationFailure extends Failure {
+  const QrValidationFailure(super.message, {super.code});
+}
+
+/// Returned when device location capture fails (disabled, denied, etc.).
+class LocationFailure extends Failure {
+  const LocationFailure(super.message, {super.code});
+}
