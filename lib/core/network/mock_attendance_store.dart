@@ -1,4 +1,4 @@
-﻿import '../../features/attendance/domain/entities/attendance_record.dart';
+import '../../features/attendance/domain/entities/attendance_record.dart';
 import '../../features/qr_session/domain/entities/qr_session.dart';
 
 class MockAttendanceStore {
@@ -24,6 +24,7 @@ class MockAttendanceStore {
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
     final twoDaysAgo = today.subtract(const Duration(days: 2));
+    final threeDaysAgo = today.subtract(const Duration(days: 3));
 
     var idCounter = 1;
 
@@ -152,19 +153,19 @@ class MockAttendanceStore {
       outMinute: 15,
     );
 
-    addSingle(employeeId: 'EMP001', day: today, inHour: 9, inMinute: 0);
+    addSingle(employeeId: 'EMP001', day: threeDaysAgo, inHour: 9, inMinute: 0);
     addPair(
       employeeId: 'EMP002',
-      day: today,
+      day: threeDaysAgo,
       inHour: 9,
       inMinute: 12,
       outHour: 13,
       outMinute: 30,
     );
-    addSingle(employeeId: 'EMP003', day: today, inHour: 8, inMinute: 58);
+    addSingle(employeeId: 'EMP003', day: threeDaysAgo, inHour: 8, inMinute: 58);
     addPair(
       employeeId: 'EMP004',
-      day: today,
+      day: threeDaysAgo,
       inHour: 9,
       inMinute: 18,
       outHour: 14,

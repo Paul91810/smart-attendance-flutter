@@ -1,4 +1,4 @@
-﻿import '../../../../core/error/failures.dart';
+import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import '../../../attendance/domain/entities/attendance_record.dart';
 import 'qr_validation_rule.dart';
@@ -13,19 +13,20 @@ class CheckOutWithoutCheckInRule extends QrValidationRule {
     }
 
     final scanDay = context.scanTimestamp;
-    final hasPriorCheckIn = context.userAttendanceRecords.any((record) {
-      if (record.employeeId != context.user.employeeId) return false;
-      if (record.type != AttendanceType.checkIn) return false;
+    final todayRecords = context.userAttendanceRecords
+        .where((record) {
+          if (record.employeeId != context.user.employeeId) return false;
+          final recordDay = record.timestamp;
+          return recordDay.year == scanDay.year &&
+              recordDay.month == scanDay.month &&
+              recordDay.day == scanDay.day;
+        })
+        .toList()
+      ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
 
-      final recordDay = record.timestamp;
-      return recordDay.year == scanDay.year &&
-          recordDay.month == scanDay.month &&
-          recordDay.day == scanDay.day;
-    });
-
-    if (!hasPriorCheckIn) {
-      return Result.failure(
-        const QrValidationFailure(
+    if (todayRecords.isEmpty || todayRecords.last.type != AttendanceType.checkIn) {
+      return const Result.failure(
+        QrValidationFailure(
           'Cannot mark check-out without checking in first for today.',
           code: 'NO_CHECK_IN',
         ),
