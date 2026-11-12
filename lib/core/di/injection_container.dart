@@ -29,8 +29,18 @@ import '../../features/attendance/data/datasources/attendance_local_datasource.d
 import '../../features/attendance/data/datasources/attendance_remote_datasource.dart';
 import '../../features/attendance/data/repositories/attendance_repository_impl.dart';
 import '../../features/attendance/domain/repositories/attendance_repository.dart';
+import '../../features/attendance/domain/usecases/get_my_attendance_history_usecase.dart';
 import '../../features/attendance/domain/usecases/mark_attendance_usecase.dart';
 import '../../features/attendance/presentation/bloc/attendance_bloc.dart';
+import '../../features/attendance/presentation/bloc/history/history_bloc.dart';
+
+import '../../features/admin/data/datasources/admin_remote_datasource.dart';
+import '../../features/admin/data/repositories/admin_repository_impl.dart';
+import '../../features/admin/domain/repositories/admin_repository.dart';
+import '../../features/admin/domain/usecases/get_attendance_records_usecase.dart';
+import '../../features/admin/domain/usecases/get_employees_usecase.dart';
+import '../../features/admin/domain/usecases/get_summary_usecase.dart';
+import '../../features/admin/presentation/bloc/admin_dashboard_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -140,6 +150,7 @@ Future<void> initDependencies() async {
       remoteDataSource: sl(),
       localDataSource: sl(),
       networkInfo: sl(),
+      authLocalDataSource: sl(),
     ),
   );
 
@@ -147,12 +158,54 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<MarkAttendanceUsecase>(
     () => MarkAttendanceUsecase(sl()),
   );
+  sl.registerLazySingleton<GetMyAttendanceHistoryUsecase>(
+    () => GetMyAttendanceHistoryUsecase(sl()),
+  );
 
   // BLoC
   sl.registerFactory<AttendanceBloc>(
     () => AttendanceBloc(
       locationService: sl(),
       markAttendanceUsecase: sl(),
+    ),
+  );
+  sl.registerFactory<HistoryBloc>(
+    () => HistoryBloc(
+      getMyAttendanceHistoryUsecase: sl(),
+    ),
+  );
+
+  // ===================== Admin Feature =====================
+  // Data Sources
+  sl.registerLazySingleton<AdminRemoteDataSource>(
+    () => AdminRemoteDataSourceImpl(dioClient: sl()),
+  );
+
+  // Repositories
+  sl.registerLazySingleton<AdminRepository>(
+    () => AdminRepositoryImpl(
+      remoteDataSource: sl(),
+      networkInfo: sl(),
+    ),
+  );
+
+  // Use Cases
+  sl.registerLazySingleton<GetEmployeesUsecase>(
+    () => GetEmployeesUsecase(sl()),
+  );
+  sl.registerLazySingleton<GetAttendanceRecordsUsecase>(
+    () => GetAttendanceRecordsUsecase(sl()),
+  );
+  sl.registerLazySingleton<GetSummaryUsecase>(
+    () => GetSummaryUsecase(sl()),
+  );
+
+  // BLoC
+  sl.registerFactory<AdminDashboardBloc>(
+    () => AdminDashboardBloc(
+      getSummaryUsecase: sl(),
+      getEmployeesUsecase: sl(),
+      getAttendanceRecordsUsecase: sl(),
     ),
   );
 }
