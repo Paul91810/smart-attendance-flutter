@@ -30,6 +30,9 @@ class MockApiInterceptor extends Interceptor {
       await Future.delayed(Duration(milliseconds: latencyMs));
     }
 
+    // Ensure mock data is seeded
+    MockAttendanceStore.seedInitialDataIfEmpty();
+
     final path = options.path;
     final method = options.method.toUpperCase();
 
@@ -45,8 +48,16 @@ class MockApiInterceptor extends Interceptor {
         return _handleGenerateQrSession(options, handler);
       } else if (path.endsWith('/attendance/scan') && method == 'POST') {
         return await _handleAttendanceScan(options, handler);
+      } else if (path.endsWith('/attendance/me') && method == 'GET') {
+        return _handleGetMyAttendance(options, handler);
       } else if (path.endsWith('/attendance/history') && method == 'GET') {
         return _handleGetAttendanceHistory(options, handler);
+      } else if (path.endsWith('/admin/employees') && method == 'GET') {
+        return _handleGetAdminEmployees(options, handler);
+      } else if (path.endsWith('/admin/attendance') && method == 'GET') {
+        return _handleGetAdminAttendance(options, handler);
+      } else if (path.endsWith('/admin/summary') && method == 'GET') {
+        return _handleGetAdminSummary(options, handler);
       } else {
         // Default: 404 Not Found
         return respondNotFound(
@@ -379,6 +390,185 @@ class MockApiInterceptor extends Interceptor {
         .toList();
 
     return respondSuccess(options, handler, data: userRecords);
+  }
+
+  /// GET /attendance/me: Returns only the logged-in employee's attendance records.
+  void _handleGetMyAttendance(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) {
+    final user = _getAuthenticatedUser(options);
+    if (user == null) {
+      return respondUnauthorized(
+        options,
+        handler,
+        code: 'UNAUTHORIZED',
+        message: 'Invalid or missing authentication token',
+      );
+    }
+
+    final records = MockAttendanceStore.recordedAttendance
+        .where((r) => r.employeeId == user.employeeId)
+        .toList();
+
+    records.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
+    final data = records
+        .map((r) => {
+              'id': r.id,
+              'employeeId': r.employeeId,
+              'type': r.type.toTypeString(),
+              'timestamp': r.timestamp.toIso8601String(),
+              'latitude': r.latitude,
+              'longitude': r.longitude,
+              'sessionId': r.sessionId,
+              'synced': r.synced,
+            })
+        .toList();
+
+    return respondSuccess(options, handler, data: data);
+  }
+
+  /// GET /admin/employees: Returns all employees (admin only).
+  void _handleGetAdminEmployees(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) {
+    final user = _getAuthenticatedUser(options);
+    if (user == null) {
+      return respondUnauthorized(options, handler);
+    }
+    if (user.role != 'admin') {
+      return respondForbidden(
+        options,
+        handler,
+        code: 'FORBIDDEN',
+        message: 'Administrator privilege required.',
+      );
+    }
+
+    final employees = DummyUsersStore.users
+        .where((u) => u.role == 'employee')
+        .map((u) => {
+              'id': u.id,
+              'employeeId': u.employeeId,
+              'name': u.name,
+              'email': u.email,
+              'role': u.role,
+              'department': 'Operations',
+            })
+        .toList();
+
+    return respondSuccess(options, handler, data: employees);
+  }
+
+  /// GET /admin/attendance: Returns filtered attendance records with employee names (admin only).
+  void _handleGetAdminAttendance(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) {
+    final user = _getAuthenticatedUser(options);
+    if (user == null) {
+      return respondUnauthorized(options, handler);
+    }
+    if (user.role != 'admin') {
+      return respondForbidden(
+        options,
+        handler,
+        code: 'FORBIDDEN',
+        message: 'Administrator privilege required.',
+      );
+    }
+
+    final dateFilter = options.queryParameters['date'] as String?;
+    final employeeIdFilter = options.queryParameters['employeeId'] as String?;
+
+    var records = List<AttendanceRecord>.from(MockAttendanceStore.recordedAttendance);
+
+    if (employeeIdFilter != null &&
+        employeeIdFilter.isNotEmpty &&
+        employeeIdFilter != 'ALL') {
+      records = records.where((r) => r.employeeId == employeeIdFilter).toList();
+    }
+
+    if (dateFilter != null && dateFilter.isNotEmpty) {
+      final parsedDate = DateTime.tryParse(dateFilter);
+      if (parsedDate != null) {
+        records = records.where((r) =>
+            r.timestamp.year == parsedDate.year &&
+            r.timestamp.month == parsedDate.month &&
+            r.timestamp.day == parsedDate.day).toList();
+      }
+    }
+
+    records.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
+    final enrichedRecords = records.map((r) {
+      final emp = DummyUsersStore.findByIdentifier(r.employeeId);
+      return {
+        'id': r.id,
+        'employeeId': r.employeeId,
+        'employeeName': emp?.name ?? 'Employee ${r.employeeId}',
+        'type': r.type.toTypeString(),
+        'timestamp': r.timestamp.toIso8601String(),
+        'latitude': r.latitude,
+        'longitude': r.longitude,
+        'sessionId': r.sessionId,
+        'synced': r.synced,
+      };
+    }).toList();
+
+    return respondSuccess(options, handler, data: enrichedRecords);
+  }
+
+  /// GET /admin/summary: Computes total employees, present today, and checked out today (admin only).
+  void _handleGetAdminSummary(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) {
+    final user = _getAuthenticatedUser(options);
+    if (user == null) {
+      return respondUnauthorized(options, handler);
+    }
+    if (user.role != 'admin') {
+      return respondForbidden(
+        options,
+        handler,
+        code: 'FORBIDDEN',
+        message: 'Administrator privilege required.',
+      );
+    }
+
+    final totalEmployees = DummyUsersStore.users.where((u) => u.role == 'employee').length;
+
+    final now = DateTime.now();
+    final todayRecords = MockAttendanceStore.recordedAttendance.where((r) =>
+        r.timestamp.year == now.year &&
+        r.timestamp.month == now.month &&
+        r.timestamp.day == now.day).toList();
+
+    // Sort today's records chronologically to find the latest action per employee
+    todayRecords.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+
+    final Map<String, AttendanceType> latestAction = {};
+    for (final rec in todayRecords) {
+      latestAction[rec.employeeId] = rec.type;
+    }
+
+    final presentCount =
+        latestAction.values.where((t) => t == AttendanceType.checkIn).length;
+    final checkedOutCount =
+        latestAction.values.where((t) => t == AttendanceType.checkOut).length;
+
+    return respondSuccess(
+      options,
+      handler,
+      data: {
+        'totalEmployees': totalEmployees,
+        'presentToday': presentCount,
+        'checkedOutToday': checkedOutCount,
+      },
+    );
   }
 
   // ===================== Authentication Helper =====================
