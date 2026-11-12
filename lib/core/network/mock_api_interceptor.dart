@@ -1,7 +1,9 @@
 ﻿import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+
 import 'package:dio/dio.dart';
+
 import '../constants/app_constants.dart';
 import '../../features/attendance/domain/entities/attendance_record.dart';
 import '../../features/auth/domain/entities/user.dart';
@@ -23,15 +25,12 @@ class MockApiInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    // 1. Simulate network latency (600ms default)
     if (latencyMs > 0) {
       await Future.delayed(Duration(milliseconds: latencyMs));
     }
 
-    // Ensure mock data is seeded
     MockAttendanceStore.seedInitialDataIfEmpty();
 
-    // Check simulation toggles for offline and server errors
     if (MockAttendanceStore.simulateOffline) {
       return handler.reject(
         DioException(
@@ -55,7 +54,6 @@ class MockApiInterceptor extends Interceptor {
     final method = options.method.toUpperCase();
 
     try {
-      // 2. Route matching
       if (path.endsWith('/auth/login') && method == 'POST') {
         return _handleLogin(options, handler);
       } else if (path.endsWith('/auth/logout') && method == 'POST') {
@@ -79,7 +77,6 @@ class MockApiInterceptor extends Interceptor {
       } else if (path.endsWith('/admin/summary') && method == 'GET') {
         return _handleGetAdminSummary(options, handler);
       } else {
-        // Default: 404 Not Found
         return respondNotFound(
           options,
           handler,
@@ -97,20 +94,13 @@ class MockApiInterceptor extends Interceptor {
     }
   }
 
-  // ===================== Route Handlers =====================
-
-  void _handleLogin(
-    RequestOptions options,
-    RequestInterceptorHandler handler,
-  ) {
+  void _handleLogin(RequestOptions options, RequestInterceptorHandler handler) {
     Map<String, dynamic> data;
     if (options.data is Map<String, dynamic>) {
       data = options.data as Map<String, dynamic>;
     } else if (options.data is FormData) {
       final formData = options.data as FormData;
-      data = {
-        for (final entry in formData.fields) entry.key: entry.value,
-      };
+      data = {for (final entry in formData.fields) entry.key: entry.value};
     } else {
       return respondError(
         options,
@@ -121,9 +111,10 @@ class MockApiInterceptor extends Interceptor {
       );
     }
 
-    final identifier = (data['identifier'] ?? data['email'] ?? data['employeeId'] ?? '')
-        .toString()
-        .trim();
+    final identifier =
+        (data['identifier'] ?? data['email'] ?? data['employeeId'] ?? '')
+            .toString()
+            .trim();
     final password = (data['password'] ?? '').toString();
 
     if (identifier.isEmpty || password.isEmpty) {
@@ -146,14 +137,12 @@ class MockApiInterceptor extends Interceptor {
       );
     }
 
-    final token = 'mock-jwt-${dummyUser.id}-${DateTime.now().millisecondsSinceEpoch}';
+    final token =
+        'mock-jwt-${dummyUser.id}-${DateTime.now().millisecondsSinceEpoch}';
     return respondSuccess(
       options,
       handler,
-      data: {
-        'token': token,
-        'user': dummyUser.toUserMap(),
-      },
+      data: {'token': token, 'user': dummyUser.toUserMap()},
     );
   }
 
@@ -182,11 +171,7 @@ class MockApiInterceptor extends Interceptor {
       );
     }
 
-    return respondSuccess(
-      options,
-      handler,
-      data: user.toUserMap(),
-    );
+    return respondSuccess(options, handler, data: user.toUserMap());
   }
 
   void _handleGenerateQrSession(
@@ -203,7 +188,6 @@ class MockApiInterceptor extends Interceptor {
       );
     }
 
-    // Role check: Only administrators are authorized to generate session codes
     if (user.role.toLowerCase() != 'admin') {
       return respondForbidden(
         options,
@@ -213,19 +197,15 @@ class MockApiInterceptor extends Interceptor {
       );
     }
 
-    // =========================================================================
-    // SECURITY DESIGN:
-    // 1. Session ID: Globally unique timestamped identifier.
-    // 2. Nonce: Cryptographically randomized string ensuring single-use consumption.
-    // 3. Expiration: Strict 60-second validity window.
-    // 4. HMAC-SHA256: Signature computed using app secret over canonical string
-    //    `$sessionId:${issuedAt.toIso8601String()}:${expiresAt.toIso8601String()}:$nonce`.
-    // =========================================================================
     final now = DateTime.now();
     final issuedAt = now;
-    final expiresAt = now.add(const Duration(seconds: AppConstants.qrExpirySeconds));
-    final sessionId = 'ses_${now.millisecondsSinceEpoch}_${Random().nextInt(10000)}';
-    final nonce = 'nonce_${now.microsecondsSinceEpoch}_${Random().nextInt(999999)}';
+    final expiresAt = now.add(
+      const Duration(seconds: AppConstants.qrExpirySeconds),
+    );
+    final sessionId =
+        'ses_${now.millisecondsSinceEpoch}_${Random().nextInt(10000)}';
+    final nonce =
+        'nonce_${now.microsecondsSinceEpoch}_${Random().nextInt(999999)}';
 
     final signature = QrSession.computeHmacSignature(
       sessionId: sessionId,
@@ -243,7 +223,6 @@ class MockApiInterceptor extends Interceptor {
       signature: signature,
     );
 
-    // Save session in mock store to enable nonce consumption tracking
     MockAttendanceStore.issuedSessions.add(session);
 
     return respondSuccess(
@@ -352,7 +331,6 @@ class MockApiInterceptor extends Interceptor {
       );
     }
 
-    // Validation passed: Mark single-use nonce as consumed
     MockAttendanceStore.usedNonces.add(sessionModel.nonce);
 
     final newRecord = AttendanceRecord(
@@ -395,16 +373,18 @@ class MockApiInterceptor extends Interceptor {
 
     final userRecords = MockAttendanceStore.recordedAttendance
         .where((r) => r.employeeId == user.employeeId)
-        .map((r) => {
-              'id': r.id,
-              'employeeId': r.employeeId,
-              'type': r.type.toTypeString(),
-              'timestamp': r.timestamp.toIso8601String(),
-              'latitude': r.latitude,
-              'longitude': r.longitude,
-              'sessionId': r.sessionId,
-              'synced': true,
-            })
+        .map(
+          (r) => {
+            'id': r.id,
+            'employeeId': r.employeeId,
+            'type': r.type.toTypeString(),
+            'timestamp': r.timestamp.toIso8601String(),
+            'latitude': r.latitude,
+            'longitude': r.longitude,
+            'sessionId': r.sessionId,
+            'synced': true,
+          },
+        )
         .toList();
 
     return respondSuccess(options, handler, data: userRecords);
@@ -431,16 +411,18 @@ class MockApiInterceptor extends Interceptor {
     records.sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
     final data = records
-        .map((r) => {
-              'id': r.id,
-              'employeeId': r.employeeId,
-              'type': r.type.toTypeString(),
-              'timestamp': r.timestamp.toIso8601String(),
-              'latitude': r.latitude,
-              'longitude': r.longitude,
-              'sessionId': r.sessionId,
-              'synced': r.synced,
-            })
+        .map(
+          (r) => {
+            'id': r.id,
+            'employeeId': r.employeeId,
+            'type': r.type.toTypeString(),
+            'timestamp': r.timestamp.toIso8601String(),
+            'latitude': r.latitude,
+            'longitude': r.longitude,
+            'sessionId': r.sessionId,
+            'synced': r.synced,
+          },
+        )
         .toList();
 
     return respondSuccess(options, handler, data: data);
@@ -454,7 +436,6 @@ class MockApiInterceptor extends Interceptor {
     if (user == null) {
       return respondUnauthorized(options, handler);
     }
-    // Role check: Only employees can record attendance
     if (user.role != 'employee') {
       return respondForbidden(
         options,
@@ -478,31 +459,38 @@ class MockApiInterceptor extends Interceptor {
     final longitude = (data['longitude'] as num?)?.toDouble() ?? 0.0;
     final sessionId = data['sessionId'] as String? ?? 'OFFLINE-SYNC';
 
-    // Prevent duplicate upload if same sessionId + employeeId + type already exists
-    final alreadyExists = MockAttendanceStore.recordedAttendance.any((r) =>
-        r.employeeId == employeeId &&
-        r.type == type &&
-        r.timestamp.year == timestamp.year &&
-        r.timestamp.month == timestamp.month &&
-        r.timestamp.day == timestamp.day);
-
-    if (alreadyExists) {
-      final existing = MockAttendanceStore.recordedAttendance.firstWhere((r) =>
+    final alreadyExists = MockAttendanceStore.recordedAttendance.any(
+      (r) =>
           r.employeeId == employeeId &&
           r.type == type &&
           r.timestamp.year == timestamp.year &&
           r.timestamp.month == timestamp.month &&
-          r.timestamp.day == timestamp.day);
-      return respondSuccess(options, handler, data: {
-        'id': existing.id,
-        'employeeId': existing.employeeId,
-        'type': existing.type.toTypeString(),
-        'timestamp': existing.timestamp.toIso8601String(),
-        'latitude': existing.latitude,
-        'longitude': existing.longitude,
-        'sessionId': existing.sessionId,
-        'synced': true,
-      });
+          r.timestamp.day == timestamp.day,
+    );
+
+    if (alreadyExists) {
+      final existing = MockAttendanceStore.recordedAttendance.firstWhere(
+        (r) =>
+            r.employeeId == employeeId &&
+            r.type == type &&
+            r.timestamp.year == timestamp.year &&
+            r.timestamp.month == timestamp.month &&
+            r.timestamp.day == timestamp.day,
+      );
+      return respondSuccess(
+        options,
+        handler,
+        data: {
+          'id': existing.id,
+          'employeeId': existing.employeeId,
+          'type': existing.type.toTypeString(),
+          'timestamp': existing.timestamp.toIso8601String(),
+          'latitude': existing.latitude,
+          'longitude': existing.longitude,
+          'sessionId': existing.sessionId,
+          'synced': true,
+        },
+      );
     }
 
     final newId = MockAttendanceStore.recordedAttendance.length + 1;
@@ -554,14 +542,16 @@ class MockApiInterceptor extends Interceptor {
 
     final employees = DummyUsersStore.users
         .where((u) => u.role == 'employee')
-        .map((u) => {
-              'id': u.id,
-              'employeeId': u.employeeId,
-              'name': u.name,
-              'email': u.email,
-              'role': u.role,
-              'department': 'Operations',
-            })
+        .map(
+          (u) => {
+            'id': u.id,
+            'employeeId': u.employeeId,
+            'name': u.name,
+            'email': u.email,
+            'role': u.role,
+            'department': 'Operations',
+          },
+        )
         .toList();
 
     return respondSuccess(options, handler, data: employees);
@@ -587,7 +577,9 @@ class MockApiInterceptor extends Interceptor {
     final dateFilter = options.queryParameters['date'] as String?;
     final employeeIdFilter = options.queryParameters['employeeId'] as String?;
 
-    var records = List<AttendanceRecord>.from(MockAttendanceStore.recordedAttendance);
+    var records = List<AttendanceRecord>.from(
+      MockAttendanceStore.recordedAttendance,
+    );
 
     if (employeeIdFilter != null &&
         employeeIdFilter.isNotEmpty &&
@@ -598,10 +590,14 @@ class MockApiInterceptor extends Interceptor {
     if (dateFilter != null && dateFilter.isNotEmpty) {
       final parsedDate = DateTime.tryParse(dateFilter);
       if (parsedDate != null) {
-        records = records.where((r) =>
-            r.timestamp.year == parsedDate.year &&
-            r.timestamp.month == parsedDate.month &&
-            r.timestamp.day == parsedDate.day).toList();
+        records = records
+            .where(
+              (r) =>
+                  r.timestamp.year == parsedDate.year &&
+                  r.timestamp.month == parsedDate.month &&
+                  r.timestamp.day == parsedDate.day,
+            )
+            .toList();
       }
     }
 
@@ -642,15 +638,20 @@ class MockApiInterceptor extends Interceptor {
       );
     }
 
-    final totalEmployees = DummyUsersStore.users.where((u) => u.role == 'employee').length;
+    final totalEmployees = DummyUsersStore.users
+        .where((u) => u.role == 'employee')
+        .length;
 
     final now = DateTime.now();
-    final todayRecords = MockAttendanceStore.recordedAttendance.where((r) =>
-        r.timestamp.year == now.year &&
-        r.timestamp.month == now.month &&
-        r.timestamp.day == now.day).toList();
+    final todayRecords = MockAttendanceStore.recordedAttendance
+        .where(
+          (r) =>
+              r.timestamp.year == now.year &&
+              r.timestamp.month == now.month &&
+              r.timestamp.day == now.day,
+        )
+        .toList();
 
-    // Sort today's records chronologically to find the latest action per employee
     todayRecords.sort((a, b) => a.timestamp.compareTo(b.timestamp));
 
     final Map<String, AttendanceType> latestAction = {};
@@ -658,10 +659,12 @@ class MockApiInterceptor extends Interceptor {
       latestAction[rec.employeeId] = rec.type;
     }
 
-    final presentCount =
-        latestAction.values.where((t) => t == AttendanceType.checkIn).length;
-    final checkedOutCount =
-        latestAction.values.where((t) => t == AttendanceType.checkOut).length;
+    final presentCount = latestAction.values
+        .where((t) => t == AttendanceType.checkIn)
+        .length;
+    final checkedOutCount = latestAction.values
+        .where((t) => t == AttendanceType.checkOut)
+        .length;
 
     return respondSuccess(
       options,
@@ -673,8 +676,6 @@ class MockApiInterceptor extends Interceptor {
       },
     );
   }
-
-  // ===================== Authentication Helper =====================
 
   DummyUser? _getAuthenticatedUser(RequestOptions options) {
     final authHeader = options.headers['Authorization'] as String?;
@@ -692,8 +693,6 @@ class MockApiInterceptor extends Interceptor {
     return DummyUsersStore.users.first;
   }
 
-  // ===================== Standardized Response Helpers =====================
-
   void respondSuccess(
     RequestOptions options,
     RequestInterceptorHandler handler, {
@@ -704,10 +703,7 @@ class MockApiInterceptor extends Interceptor {
       Response<Map<String, dynamic>>(
         requestOptions: options,
         statusCode: statusCode,
-        data: {
-          'success': true,
-          'data': data,
-        },
+        data: {'success': true, 'data': data},
       ),
     );
   }
@@ -725,11 +721,7 @@ class MockApiInterceptor extends Interceptor {
         response: Response(
           requestOptions: options,
           statusCode: statusCode,
-          data: {
-            'success': false,
-            'code': code,
-            'message': message,
-          },
+          data: {'success': false, 'code': code, 'message': message},
         ),
         type: DioExceptionType.badResponse,
       ),

@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+
 import 'responsive_breakpoints.dart';
 
 typedef ResponsiveWidgetBuilder = Widget Function(
@@ -11,7 +12,6 @@ class ResponsiveLayout extends StatelessWidget {
   final ResponsiveWidgetBuilder? medium;
   final ResponsiveWidgetBuilder? expanded;
 
-  // Backwards compatibility aliases for existing phase code
   final ResponsiveWidgetBuilder? mobile;
   final ResponsiveWidgetBuilder? tablet;
 
@@ -23,9 +23,9 @@ class ResponsiveLayout extends StatelessWidget {
     this.mobile,
     this.tablet,
   }) : assert(
-          compact != null || mobile != null,
-          'Either compact or mobile builder must be provided',
-        );
+         compact != null || mobile != null,
+         'Either compact or mobile builder must be provided',
+       );
 
   @override
   Widget build(BuildContext context) {
@@ -67,10 +67,7 @@ class ResponsiveContent extends StatelessWidget {
     return Center(
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: maxWidth),
-        child: Padding(
-          padding: padding,
-          child: child,
-        ),
+        child: Padding(padding: padding, child: child),
       ),
     );
   }

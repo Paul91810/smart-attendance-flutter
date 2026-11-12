@@ -3,11 +3,9 @@
 class AppColors {
   AppColors._();
 
-  // Brand seed color (Deep Teal / Ocean Blue)
   static const Color primarySeed = Color(0xFF0F766E);
   static const Color secondarySeed = Color(0xFF0284C7);
 
-  // Status colors
   static const Color success = Color(0xFF10B981);
   static const Color successContainer = Color(0xFFD1FAE5);
   static const Color onSuccess = Colors.white;

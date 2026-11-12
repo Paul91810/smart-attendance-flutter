@@ -1,6 +1,8 @@
 ﻿import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
+
 import '../error/failures.dart';
 import '../error/result.dart';
 
@@ -76,7 +78,6 @@ class LocationServiceImpl implements LocationService {
           ),
         );
       } catch (inner) {
-        // Fallback 1: Try last known location if live acquisition timed out
         final lastKnown = await Geolocator.getLastKnownPosition();
         if (lastKnown != null) {
           return Result.success(
@@ -88,14 +89,9 @@ class LocationServiceImpl implements LocationService {
           );
         }
 
-        // Fallback 2: In debug mode on virtual emulator where GPS might not emit fixes
         if (kDebugMode) {
           return const Result.success(
-            UserPosition(
-              latitude: 12.9716, // Bangalore HQ office
-              longitude: 77.5946,
-              accuracy: 10.0,
-            ),
+            UserPosition(latitude: 12.9716, longitude: 77.5946, accuracy: 10.0),
           );
         }
 
@@ -131,4 +127,3 @@ class LocationServiceImpl implements LocationService {
   @override
   Future<bool> openLocationSettings() => Geolocator.openLocationSettings();
 }
-

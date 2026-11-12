@@ -19,10 +19,7 @@ import 'employee_scan_page.dart';
 class EmployeeHomePage extends StatefulWidget {
   final User user;
 
-  const EmployeeHomePage({
-    super.key,
-    required this.user,
-  });
+  const EmployeeHomePage({super.key, required this.user});
 
   @override
   State<EmployeeHomePage> createState() => _EmployeeHomePageState();
@@ -63,7 +60,6 @@ class _EmployeeHomePageState extends State<EmployeeHomePage> {
           BlocListener<SyncCubit, SyncState>(
             listener: (context, state) {
               if (state is SyncSuccess && state.syncedCount > 0) {
-                // Refresh attendance history when records finish syncing
                 context.read<HistoryBloc>().add(const RefreshHistory());
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -112,7 +108,8 @@ class _EmployeeHomePageState extends State<EmployeeHomePage> {
                             child: Column(
                               children: [
                                 CircleAvatar(
-                                  backgroundColor: colorScheme.secondaryContainer,
+                                  backgroundColor:
+                                      colorScheme.secondaryContainer,
                                   child: Icon(
                                     Icons.badge_rounded,
                                     color: colorScheme.onSecondaryContainer,

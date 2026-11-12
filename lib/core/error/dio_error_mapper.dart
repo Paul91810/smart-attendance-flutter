@@ -1,4 +1,5 @@
 ﻿import 'package:dio/dio.dart';
+
 import 'failures.dart';
 
 class DioErrorMapper {
@@ -6,7 +7,6 @@ class DioErrorMapper {
 
   static Failure map(Object error) {
     if (error is DioException) {
-      // 1. If an HTTP response was received, inspect the HTTP status code and payload
       if (error.response != null) {
         final response = error.response!;
         final statusCode = response.statusCode;
@@ -27,8 +27,7 @@ class DioErrorMapper {
           );
         } else if (statusCode == 403) {
           return AuthFailure(
-            serverMessage ??
-                'Access denied. You do not have permission to perform this action.',
+            serverMessage ?? 'Access denied. You do not have permission to perform this action.',
             code: serverCode ?? 'FORBIDDEN',
           );
         } else if (statusCode != null && statusCode >= 500) {
@@ -45,19 +44,24 @@ class DioErrorMapper {
         );
       }
 
-      // 2. Network connection & timeout errors
       switch (error.type) {
         case DioExceptionType.connectionTimeout:
         case DioExceptionType.sendTimeout:
         case DioExceptionType.receiveTimeout:
-          return const TimeoutFailure('Connection timed out. Please try again.');
+          return const TimeoutFailure(
+            'Connection timed out. Please try again.',
+          );
 
         case DioExceptionType.connectionError:
           return const NetworkFailure(
-              'No internet connection. Please verify your network.');
+            'No internet connection. Please verify your network.',
+          );
 
         case DioExceptionType.cancel:
-          return const ServerFailure('Request was cancelled.', code: 'CANCELLED');
+          return const ServerFailure(
+            'Request was cancelled.',
+            code: 'CANCELLED',
+          );
 
         default:
           return ServerFailure(

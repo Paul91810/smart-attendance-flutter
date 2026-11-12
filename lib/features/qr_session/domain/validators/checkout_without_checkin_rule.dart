@@ -8,7 +8,6 @@ class CheckOutWithoutCheckInRule extends QrValidationRule {
 
   @override
   Future<Result<Failure, void>> validate(QrValidationContext context) async {
-    // Only check-out actions require prior check-in
     if (context.attendanceType != AttendanceType.checkOut) {
       return const Result.success(null);
     }
@@ -36,4 +35,3 @@ class CheckOutWithoutCheckInRule extends QrValidationRule {
     return const Result.success(null);
   }
 }
-

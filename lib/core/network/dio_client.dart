@@ -1,4 +1,5 @@
 ﻿import 'package:dio/dio.dart';
+
 import 'app_config.dart';
 import 'auth_interceptor.dart';
 import 'mock_api_interceptor.dart';
@@ -27,28 +28,24 @@ class DioClient {
       responseType: ResponseType.json,
     );
 
-    // 1. Interceptor for attaching auth token and catching 401
     dio.interceptors.add(authInterceptor);
 
-    // 2. Mock API interceptor (simulates backend when useMock is true)
     if (appConfig.useMock) {
       dio.interceptors.add(mockApiInterceptor ?? MockApiInterceptor());
     }
   }
 
-  // Convenience methods
   Future<Response<T>> get<T>(
     String path, {
     Map<String, dynamic>? queryParameters,
     Options? options,
     CancelToken? cancelToken,
-  }) =>
-      dio.get<T>(
-        path,
-        queryParameters: queryParameters,
-        options: options,
-        cancelToken: cancelToken,
-      );
+  }) => dio.get<T>(
+    path,
+    queryParameters: queryParameters,
+    options: options,
+    cancelToken: cancelToken,
+  );
 
   Future<Response<T>> post<T>(
     String path, {
@@ -56,14 +53,13 @@ class DioClient {
     Map<String, dynamic>? queryParameters,
     Options? options,
     CancelToken? cancelToken,
-  }) =>
-      dio.post<T>(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-        cancelToken: cancelToken,
-      );
+  }) => dio.post<T>(
+    path,
+    data: data,
+    queryParameters: queryParameters,
+    options: options,
+    cancelToken: cancelToken,
+  );
 
   Future<Response<T>> put<T>(
     String path, {
@@ -71,14 +67,13 @@ class DioClient {
     Map<String, dynamic>? queryParameters,
     Options? options,
     CancelToken? cancelToken,
-  }) =>
-      dio.put<T>(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-        cancelToken: cancelToken,
-      );
+  }) => dio.put<T>(
+    path,
+    data: data,
+    queryParameters: queryParameters,
+    options: options,
+    cancelToken: cancelToken,
+  );
 
   Future<Response<T>> delete<T>(
     String path, {
@@ -86,12 +81,11 @@ class DioClient {
     Map<String, dynamic>? queryParameters,
     Options? options,
     CancelToken? cancelToken,
-  }) =>
-      dio.delete<T>(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-        cancelToken: cancelToken,
-      );
+  }) => dio.delete<T>(
+    path,
+    data: data,
+    queryParameters: queryParameters,
+    options: options,
+    cancelToken: cancelToken,
+  );
 }

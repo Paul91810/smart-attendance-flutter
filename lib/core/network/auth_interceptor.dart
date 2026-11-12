@@ -4,17 +4,13 @@ class AuthInterceptor extends QueuedInterceptor {
   final Future<String?> Function() getToken;
   final void Function()? onUnauthorized;
 
-  AuthInterceptor({
-    required this.getToken,
-    this.onUnauthorized,
-  });
+  AuthInterceptor({required this.getToken, this.onUnauthorized});
 
   @override
   Future<void> onRequest(
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    // If authorization header is not explicitly set, fetch token and attach
     if (!options.headers.containsKey('Authorization')) {
       final token = await getToken();
       if (token != null && token.isNotEmpty) {

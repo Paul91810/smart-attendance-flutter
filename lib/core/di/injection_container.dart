@@ -52,10 +52,8 @@ import '../network/mock_attendance_store.dart';
 final sl = GetIt.instance;
 
 Future<void> initDependencies() async {
-  // Ensure mock seed data is initialized for first launch
   MockAttendanceStore.seedInitialDataIfEmpty();
 
-  // ===================== Core =====================
   sl.registerLazySingleton<AppConfig>(() => const AppConfig());
   sl.registerLazySingleton<Connectivity>(() => Connectivity());
   sl.registerLazySingleton<NetworkInfo>(() => NetworkInfoImpl(sl()));
@@ -80,20 +78,14 @@ Future<void> initDependencies() async {
   );
 
   sl.registerLazySingleton<DioClient>(
-    () => DioClient(
-      appConfig: sl(),
-      authInterceptor: sl(),
-    ),
+    () => DioClient(appConfig: sl(), authInterceptor: sl()),
   );
 
-  // Theme & Connectivity
   sl.registerFactory<ThemeCubit>(() => ThemeCubit());
   sl.registerFactory<ConnectivityCubit>(
     () => ConnectivityCubit(networkInfo: sl()),
   );
 
-  // ===================== Auth Feature =====================
-  // Data Sources
   sl.registerLazySingleton<AuthRemoteDataSource>(
     () => AuthRemoteDataSourceImpl(dioClient: sl()),
   );
@@ -101,7 +93,6 @@ Future<void> initDependencies() async {
     () => AuthLocalDataSourceImpl(secureStorage: sl()),
   );
 
-  // Repositories
   sl.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(
       remoteDataSource: sl(),
@@ -110,14 +101,12 @@ Future<void> initDependencies() async {
     ),
   );
 
-  // Use Cases
   sl.registerLazySingleton<LoginUsecase>(() => LoginUsecase(sl()));
   sl.registerLazySingleton<LogoutUsecase>(() => LogoutUsecase(sl()));
   sl.registerLazySingleton<GetCurrentUserUsecase>(
     () => GetCurrentUserUsecase(sl()),
   );
 
-  // BLoC
   sl.registerFactory<AuthBloc>(
     () => AuthBloc(
       loginUsecase: sl(),
@@ -126,34 +115,22 @@ Future<void> initDependencies() async {
     ),
   );
 
-  // ===================== QR Session Feature =====================
-  // Data Sources
   sl.registerLazySingleton<QrRemoteDataSource>(
     () => QrRemoteDataSourceImpl(dioClient: sl()),
   );
 
-  // Repositories
   sl.registerLazySingleton<QrRepository>(
-    () => QrRepositoryImpl(
-      remoteDataSource: sl(),
-      networkInfo: sl(),
-    ),
+    () => QrRepositoryImpl(remoteDataSource: sl(), networkInfo: sl()),
   );
 
-  // Use Cases
   sl.registerLazySingleton<GenerateQrSessionUsecase>(
     () => GenerateQrSessionUsecase(sl()),
   );
 
-  // BLoC
   sl.registerFactory<QrSessionBloc>(
-    () => QrSessionBloc(
-      generateQrSessionUsecase: sl(),
-    ),
+    () => QrSessionBloc(generateQrSessionUsecase: sl()),
   );
 
-  // ===================== Attendance Feature =====================
-  // Data Sources
   sl.registerLazySingleton<AttendanceLocalDataSource>(
     () => AttendanceLocalDataSourceImpl(databaseHelper: sl()),
   );
@@ -161,7 +138,6 @@ Future<void> initDependencies() async {
     () => AttendanceRemoteDataSourceImpl(dioClient: sl()),
   );
 
-  // Repositories
   sl.registerLazySingleton<AttendanceRepository>(
     () => AttendanceRepositoryImpl(
       remoteDataSource: sl(),
@@ -171,7 +147,6 @@ Future<void> initDependencies() async {
     ),
   );
 
-  // Use Cases
   sl.registerLazySingleton<MarkAttendanceUsecase>(
     () => MarkAttendanceUsecase(sl()),
   );
@@ -185,51 +160,33 @@ Future<void> initDependencies() async {
     () => SyncAttendanceUsecase(sl()),
   );
 
-  // BLoC
   sl.registerFactory<AttendanceBloc>(
-    () => AttendanceBloc(
-      locationService: sl(),
-      markAttendanceUsecase: sl(),
-    ),
+    () => AttendanceBloc(locationService: sl(), markAttendanceUsecase: sl()),
   );
   sl.registerFactory<HistoryBloc>(
-    () => HistoryBloc(
-      getMyAttendanceHistoryUsecase: sl(),
-    ),
+    () => HistoryBloc(getMyAttendanceHistoryUsecase: sl()),
   );
   sl.registerFactory<SyncCubit>(
-    () => SyncCubit(
-      syncAttendanceUsecase: sl(),
-      getUnsyncedRecordsUsecase: sl(),
-    ),
+    () =>
+        SyncCubit(syncAttendanceUsecase: sl(), getUnsyncedRecordsUsecase: sl()),
   );
 
-  // ===================== Admin Feature =====================
-  // Data Sources
   sl.registerLazySingleton<AdminRemoteDataSource>(
     () => AdminRemoteDataSourceImpl(dioClient: sl()),
   );
 
-  // Repositories
   sl.registerLazySingleton<AdminRepository>(
-    () => AdminRepositoryImpl(
-      remoteDataSource: sl(),
-      networkInfo: sl(),
-    ),
+    () => AdminRepositoryImpl(remoteDataSource: sl(), networkInfo: sl()),
   );
 
-  // Use Cases
   sl.registerLazySingleton<GetEmployeesUsecase>(
     () => GetEmployeesUsecase(sl()),
   );
   sl.registerLazySingleton<GetAttendanceRecordsUsecase>(
     () => GetAttendanceRecordsUsecase(sl()),
   );
-  sl.registerLazySingleton<GetSummaryUsecase>(
-    () => GetSummaryUsecase(sl()),
-  );
+  sl.registerLazySingleton<GetSummaryUsecase>(() => GetSummaryUsecase(sl()));
 
-  // BLoC
   sl.registerFactory<AdminDashboardBloc>(
     () => AdminDashboardBloc(
       getSummaryUsecase: sl(),
@@ -238,8 +195,6 @@ Future<void> initDependencies() async {
     ),
   );
   sl.registerFactory<EmployeeDetailCubit>(
-    () => EmployeeDetailCubit(
-      getAttendanceRecordsUsecase: sl(),
-    ),
+    () => EmployeeDetailCubit(getAttendanceRecordsUsecase: sl()),
   );
 }

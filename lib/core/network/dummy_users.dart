@@ -3,7 +3,7 @@
   final String employeeId;
   final String name;
   final String email;
-  final String role; // 'admin' or 'employee'
+  final String role;
   final String password;
 
   const DummyUser({
@@ -30,7 +30,6 @@ class DummyUsersStore {
   DummyUsersStore._();
 
   static final List<DummyUser> users = [
-    // 1 Admin
     const DummyUser(
       id: 'usr_admin_000',
       employeeId: 'EMP000',
@@ -39,7 +38,6 @@ class DummyUsersStore {
       role: 'admin',
       password: 'admin123',
     ),
-    // 5 Employees
     const DummyUser(
       id: 'usr_emp_001',
       employeeId: 'EMP001',
