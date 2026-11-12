@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../attendance/domain/entities/attendance_record.dart';
-import '../../domain/entities/admin_attendance_record.dart';
 import '../../domain/entities/employee.dart';
-import '../../domain/usecases/get_attendance_records_usecase.dart';
+import '../bloc/employee_detail/employee_detail_cubit.dart';
+import '../bloc/employee_detail/employee_detail_state.dart';
 
 /// Reusable employee detail pane used in both the full-page detail screen
 /// and the expanded tablet master-detail layout.
-class AdminEmployeeDetailPane extends StatefulWidget {
+class AdminEmployeeDetailPane extends StatelessWidget {
   final Employee employee;
   final VoidCallback? onClose;
 
@@ -21,34 +22,23 @@ class AdminEmployeeDetailPane extends StatefulWidget {
   });
 
   @override
-  State<AdminEmployeeDetailPane> createState() => _AdminEmployeeDetailPaneState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      key: ValueKey('employee_detail_${employee.employeeId}'),
+      create: (_) => sl<EmployeeDetailCubit>()..loadEmployeeRecords(employee.employeeId),
+      child: _AdminEmployeeDetailView(employee: employee, onClose: onClose),
+    );
+  }
 }
 
-class _AdminEmployeeDetailPaneState extends State<AdminEmployeeDetailPane> {
-  late Future<List<AdminAttendanceRecord>> _recordsFuture;
+class _AdminEmployeeDetailView extends StatelessWidget {
+  final Employee employee;
+  final VoidCallback? onClose;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadEmployeeRecords();
-  }
-
-  @override
-  void didUpdateWidget(covariant AdminEmployeeDetailPane oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.employee.employeeId != widget.employee.employeeId) {
-      _loadEmployeeRecords();
-    }
-  }
-
-  void _loadEmployeeRecords() {
-    _recordsFuture = sl<GetAttendanceRecordsUsecase>()
-        .call(employeeId: widget.employee.employeeId)
-        .then((result) => result.fold(
-              (failure) => throw Exception(failure.message),
-              (records) => records,
-            ));
-  }
+  const _AdminEmployeeDetailView({
+    required this.employee,
+    this.onClose,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -56,21 +46,17 @@ class _AdminEmployeeDetailPaneState extends State<AdminEmployeeDetailPane> {
     final colorScheme = theme.colorScheme;
 
     return RefreshIndicator(
-      onRefresh: () async {
-        setState(() {
-          _loadEmployeeRecords();
-        });
-      },
+      onRefresh: () => context.read<EmployeeDetailCubit>().loadEmployeeRecords(employee.employeeId),
       child: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-          if (widget.onClose != null)
+          if (onClose != null)
             Align(
               alignment: Alignment.centerRight,
               child: IconButton(
                 icon: const Icon(Icons.close_rounded),
                 tooltip: 'Close pane',
-                onPressed: widget.onClose,
+                onPressed: onClose,
               ),
             ),
           // Employee Info Card
@@ -89,18 +75,15 @@ class _AdminEmployeeDetailPaneState extends State<AdminEmployeeDetailPane> {
                 icon: const Icon(Icons.refresh_rounded, size: 20),
                 tooltip: 'Refresh logs',
                 onPressed: () {
-                  setState(() {
-                    _loadEmployeeRecords();
-                  });
+                  context.read<EmployeeDetailCubit>().loadEmployeeRecords(employee.employeeId);
                 },
               ),
             ],
           ),
           const SizedBox(height: 12),
-          FutureBuilder<List<AdminAttendanceRecord>>(
-            future: _recordsFuture,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
+          BlocBuilder<EmployeeDetailCubit, EmployeeDetailState>(
+            builder: (context, state) {
+              if (state is EmployeeDetailLoading || state is EmployeeDetailInitial) {
                 return const Center(
                   child: Padding(
                     padding: EdgeInsets.all(32.0),
@@ -109,78 +92,79 @@ class _AdminEmployeeDetailPaneState extends State<AdminEmployeeDetailPane> {
                 );
               }
 
-              if (snapshot.hasError) {
-                return ErrorView(
-                  title: 'Failed to load logs',
-                  message: snapshot.error.toString(),
+              if (state is EmployeeDetailError) {
+                return ErrorView.fromFailure(
+                  failure: state.failure,
                   onRetry: () {
-                    setState(() {
-                      _loadEmployeeRecords();
-                    });
+                    context.read<EmployeeDetailCubit>().loadEmployeeRecords(employee.employeeId);
                   },
                 );
               }
 
-              final records = snapshot.data ?? [];
-              if (records.isEmpty) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32.0),
-                    child: Text(
-                      'No attendance records found for this employee.',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                );
-              }
-
-              return Column(
-                children: records.map((r) {
-                  final isCheckIn = r.type == AttendanceType.checkIn;
-                  final timeStr =
-                      DateFormat('hh:mm a, dd MMM yyyy').format(r.timestamp);
-
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 8.0),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(color: colorScheme.outlineVariant),
-                    ),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: isCheckIn
-                            ? colorScheme.primaryContainer
-                            : colorScheme.secondaryContainer,
-                        child: Icon(
-                          isCheckIn
-                              ? Icons.login_rounded
-                              : Icons.logout_rounded,
-                          color: isCheckIn
-                              ? colorScheme.onPrimaryContainer
-                              : colorScheme.onSecondaryContainer,
-                          size: 20,
-                        ),
-                      ),
-                      title: Text(
-                        isCheckIn ? 'Check In' : 'Check Out',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      subtitle: Text(
-                        '$timeStr\nLat: ${r.latitude.toStringAsFixed(4)}, Lng: ${r.longitude.toStringAsFixed(4)}',
-                        style: TextStyle(
+              if (state is EmployeeDetailLoaded) {
+                final records = state.records;
+                if (records.isEmpty) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Text(
+                        'No attendance records found for this employee.',
+                        style: theme.textTheme.bodyMedium?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
                       ),
-                      isThreeLine: true,
                     ),
                   );
-                }).toList(),
-              );
+                }
+
+                return Column(
+                  children: records.map<Widget>((r) {
+                    final isCheckIn = r.type == AttendanceType.checkIn;
+                    final timeStr =
+                        DateFormat('hh:mm a, dd MMM yyyy').format(r.timestamp);
+
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 8.0),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(color: colorScheme.outlineVariant),
+                      ),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: isCheckIn
+                              ? colorScheme.primaryContainer
+                              : colorScheme.secondaryContainer,
+                          child: Icon(
+                            isCheckIn
+                                ? Icons.login_rounded
+                                : Icons.logout_rounded,
+                            color: isCheckIn
+                                ? colorScheme.onPrimaryContainer
+                                : colorScheme.onSecondaryContainer,
+                            size: 20,
+                          ),
+                        ),
+                        title: Text(
+                          isCheckIn ? 'Check In' : 'Check Out',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        subtitle: Text(
+                          '$timeStr\nLat: ${r.latitude.toStringAsFixed(4)}, Lng: ${r.longitude.toStringAsFixed(4)}',
+                          style: TextStyle(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        isThreeLine: true,
+                      ),
+                    );
+                  }).toList(),
+                );
+              }
+
+              return const SizedBox.shrink();
             },
           ),
         ],
@@ -191,7 +175,11 @@ class _AdminEmployeeDetailPaneState extends State<AdminEmployeeDetailPane> {
   Widget _buildEmployeeCard(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final emp = widget.employee;
+    final initials = employee.name
+        .split(' ')
+        .map((e) => e.isNotEmpty ? e[0] : '')
+        .take(2)
+        .join();
 
     return Card(
       elevation: 0,
@@ -200,19 +188,20 @@ class _AdminEmployeeDetailPaneState extends State<AdminEmployeeDetailPane> {
         side: BorderSide(color: colorScheme.outlineVariant),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
             Row(
               children: [
                 CircleAvatar(
-                  radius: 28,
+                  radius: 30,
                   backgroundColor: colorScheme.primaryContainer,
                   child: Text(
-                    emp.name.split(' ').map((e) => e[0]).take(2).join(),
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: colorScheme.onPrimaryContainer,
+                    initials,
+                    style: TextStyle(
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
+                      color: colorScheme.onPrimaryContainer,
                     ),
                   ),
                 ),
@@ -222,14 +211,14 @@ class _AdminEmployeeDetailPaneState extends State<AdminEmployeeDetailPane> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        emp.name,
-                        style: theme.textTheme.titleLarge?.copyWith(
+                        employee.name,
+                        style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${emp.employeeId} • ${emp.department}',
+                        '${employee.employeeId} • ${employee.department}',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
@@ -237,25 +226,21 @@ class _AdminEmployeeDetailPaneState extends State<AdminEmployeeDetailPane> {
                     ],
                   ),
                 ),
-                _buildRoleBadge(context, emp.role),
+                _buildRoleBadge(context, employee.role),
               ],
             ),
-            const SizedBox(height: 16),
-            const Divider(height: 1),
-            const SizedBox(height: 12),
+            const Divider(height: 32),
             Row(
               children: [
                 Icon(
                   Icons.email_outlined,
-                  size: 18,
+                  size: 20,
                   color: colorScheme.onSurfaceVariant,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 12),
                 Text(
-                  emp.email,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  employee.email,
+                  style: theme.textTheme.bodyMedium,
                 ),
               ],
             ),
@@ -270,15 +255,16 @@ class _AdminEmployeeDetailPaneState extends State<AdminEmployeeDetailPane> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: colorScheme.secondaryContainer,
+        color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Text(
         role.toUpperCase(),
         style: TextStyle(
-          color: colorScheme.onSecondaryContainer,
           fontSize: 12,
           fontWeight: FontWeight.bold,
+          color: colorScheme.onSurfaceVariant,
         ),
       ),
     );

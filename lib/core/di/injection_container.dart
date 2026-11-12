@@ -19,6 +19,7 @@ import '../../features/auth/domain/usecases/get_current_user_usecase.dart';
 import '../../features/auth/domain/usecases/login_usecase.dart';
 import '../../features/auth/domain/usecases/logout_usecase.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../features/auth/presentation/bloc/auth_event.dart';
 
 import '../../features/qr_session/data/datasources/qr_remote_datasource.dart';
 import '../../features/qr_session/data/repositories/qr_repository_impl.dart';
@@ -45,11 +46,16 @@ import '../../features/admin/domain/usecases/get_attendance_records_usecase.dart
 import '../../features/admin/domain/usecases/get_employees_usecase.dart';
 import '../../features/admin/domain/usecases/get_summary_usecase.dart';
 import '../../features/admin/presentation/bloc/admin_dashboard_bloc.dart';
+import '../../features/admin/presentation/bloc/employee_detail/employee_detail_cubit.dart';
+import '../network/mock_attendance_store.dart';
 
 final sl = GetIt.instance;
 
 /// Centralized Dependency Injection registry using GetIt.
 Future<void> initDependencies() async {
+  // Ensure mock seed data is initialized for first launch
+  MockAttendanceStore.seedInitialDataIfEmpty();
+
   // ===================== Core =====================
   sl.registerLazySingleton<AppConfig>(() => const AppConfig());
   sl.registerLazySingleton<Connectivity>(() => Connectivity());
@@ -65,7 +71,12 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<AuthInterceptor>(
     () => AuthInterceptor(
       getToken: () => sl<AuthLocalDataSource>().getToken(),
-      onUnauthorized: () => sl<AuthLocalDataSource>().clear(),
+      onUnauthorized: () {
+        sl<AuthLocalDataSource>().clear();
+        if (sl.isRegistered<AuthBloc>()) {
+          sl<AuthBloc>().add(const LogoutRequested());
+        }
+      },
     ),
   );
 
@@ -224,6 +235,11 @@ Future<void> initDependencies() async {
     () => AdminDashboardBloc(
       getSummaryUsecase: sl(),
       getEmployeesUsecase: sl(),
+      getAttendanceRecordsUsecase: sl(),
+    ),
+  );
+  sl.registerFactory<EmployeeDetailCubit>(
+    () => EmployeeDetailCubit(
       getAttendanceRecordsUsecase: sl(),
     ),
   );

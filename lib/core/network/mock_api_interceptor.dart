@@ -461,6 +461,15 @@ class MockApiInterceptor extends Interceptor {
     if (user == null) {
       return respondUnauthorized(options, handler);
     }
+    // Role check: Only employees can record attendance
+    if (user.role != 'employee') {
+      return respondForbidden(
+        options,
+        handler,
+        code: 'FORBIDDEN',
+        message: 'Only employees are authorized to record attendance.',
+      );
+    }
 
     final data = options.data is Map<String, dynamic>
         ? options.data as Map<String, dynamic>
