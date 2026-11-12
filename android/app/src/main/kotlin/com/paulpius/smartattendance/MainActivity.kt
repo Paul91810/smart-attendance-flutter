@@ -1,4 +1,4 @@
-package com.example.test_1
+package com.paulpius.smartattendance
 
 import io.flutter.embedding.android.FlutterActivity
 
