@@ -1,4 +1,4 @@
-import '../../../../core/error/failures.dart';
+﻿import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import 'checkout_without_checkin_rule.dart';
 import 'duplicate_attendance_rule.dart';
@@ -8,7 +8,6 @@ import 'qr_validation_rule.dart';
 import 'role_rule.dart';
 import 'signature_rule.dart';
 
-/// Composite validator executing an open list of single-responsibility rules (SOLID: OCP & SRP).
 class QrValidator {
   final List<QrValidationRule> rules;
 
@@ -23,7 +22,6 @@ class QrValidator {
     ],
   });
 
-  /// Evaluates context through all rules sequentially. Short-circuits on the first violation.
   Future<Result<Failure, void>> validate(QrValidationContext context) async {
     for (final rule in rules) {
       final result = await rule.validate(context);

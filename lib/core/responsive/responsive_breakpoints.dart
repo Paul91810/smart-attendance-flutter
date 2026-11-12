@@ -1,9 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
-/// Screen size breakpoints according to Material 3 responsive guidelines:
-/// - Compact: width < 600 (phones in portrait)
-/// - Medium: 600 <= width <= 900 (foldables, small tablets, phones in landscape)
-/// - Expanded: width > 900 (tablets in landscape, desktop)
 class ResponsiveBreakpoints {
   ResponsiveBreakpoints._();
 

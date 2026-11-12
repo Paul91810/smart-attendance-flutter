@@ -1,8 +1,7 @@
-import '../../../../core/error/failures.dart';
+﻿import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import 'qr_validation_rule.dart';
 
-/// Single-responsibility rule checking that an employee does not mark the same attendance type multiple times on the same day.
 class DuplicateAttendanceRule extends QrValidationRule {
   const DuplicateAttendanceRule();
 

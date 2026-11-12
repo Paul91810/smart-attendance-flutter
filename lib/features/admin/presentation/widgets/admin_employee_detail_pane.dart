@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
@@ -9,8 +9,6 @@ import '../../domain/entities/employee.dart';
 import '../bloc/employee_detail/employee_detail_cubit.dart';
 import '../bloc/employee_detail/employee_detail_state.dart';
 
-/// Reusable employee detail pane used in both the full-page detail screen
-/// and the expanded tablet master-detail layout.
 class AdminEmployeeDetailPane extends StatelessWidget {
   final Employee employee;
   final VoidCallback? onClose;
@@ -218,7 +216,7 @@ class _AdminEmployeeDetailView extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${employee.employeeId} • ${employee.department}',
+                        '${employee.employeeId} â€¢ ${employee.department}',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),

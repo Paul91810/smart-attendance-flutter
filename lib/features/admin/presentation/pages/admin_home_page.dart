@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/injection_container.dart';
@@ -15,8 +15,6 @@ import '../bloc/admin_dashboard_event.dart';
 import 'admin_dashboard_page.dart';
 import 'admin_employees_page.dart';
 
-/// Admin home shell supporting NavigationRail on tablet/expanded screens (>900dp)
-/// and NavigationBar on compact screens, with integrated offline banner.
 class AdminHomePage extends StatefulWidget {
   final User user;
 

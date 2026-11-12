@@ -1,9 +1,8 @@
-import '../../../../core/error/failures.dart';
+﻿import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import '../entities/qr_session.dart';
 import 'qr_validation_rule.dart';
 
-/// Single-responsibility rule verifying the HMAC-SHA256 signature to prevent tampering.
 class SignatureRule extends QrValidationRule {
   const SignatureRule();
 

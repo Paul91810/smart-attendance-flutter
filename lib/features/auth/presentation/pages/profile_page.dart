@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/responsive/responsive_breakpoints.dart';
 import '../../../../core/theme/theme_cubit.dart';
@@ -220,9 +220,6 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  /// Displays a confirmation dialog asking the user to confirm logging out.
-  /// If the user taps 'Back', the dialog is dismissed.
-  /// If the user taps 'Log Out', [LogoutRequested] is dispatched to [AuthBloc].
   Future<void> _showLogoutConfirmationDialog(BuildContext context) async {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;

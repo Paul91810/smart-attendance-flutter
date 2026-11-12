@@ -1,9 +1,8 @@
-import 'package:dio/dio.dart';
+﻿import 'package:dio/dio.dart';
 import 'app_config.dart';
 import 'auth_interceptor.dart';
 import 'mock_api_interceptor.dart';
 
-/// Configured Dio HTTP client managing base URL, timeouts, auth headers, and mock interception.
 class DioClient {
   final Dio dio;
   final AppConfig appConfig;

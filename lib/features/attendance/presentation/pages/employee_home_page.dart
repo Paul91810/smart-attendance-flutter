@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/injection_container.dart';
@@ -16,8 +16,6 @@ import '../bloc/sync/sync_cubit.dart';
 import 'employee_history_page.dart';
 import 'employee_scan_page.dart';
 
-/// Employee home landing shell supporting NavigationRail on tablet/expanded screens (>900dp)
-/// and NavigationBar on compact screens, with integrated offline banner and sync badges.
 class EmployeeHomePage extends StatefulWidget {
   final User user;
 

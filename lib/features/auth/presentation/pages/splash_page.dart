@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../admin/presentation/pages/admin_home_page.dart';
 import '../../../attendance/presentation/pages/employee_home_page.dart';
@@ -7,7 +7,6 @@ import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 import 'login_page.dart';
 
-/// Splash page verifying stored session token and automatically routing the user.
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
 

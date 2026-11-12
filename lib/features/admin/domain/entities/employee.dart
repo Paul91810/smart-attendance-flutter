@@ -1,6 +1,5 @@
-import 'package:equatable/equatable.dart';
+﻿import 'package:equatable/equatable.dart';
 
-/// Pure Dart entity representing an employee in the admin view.
 class Employee extends Equatable {
   final String id;
   final String employeeId;

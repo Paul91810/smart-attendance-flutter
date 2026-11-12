@@ -1,5 +1,4 @@
-/// Global application constants.
-class AppConstants {
+﻿class AppConstants {
   AppConstants._();
 
   static const String appName = 'Smart Attendance';
@@ -9,7 +8,6 @@ class AppConstants {
   static const int qrExpirySeconds = 60;
   static const int mockLatencyMs = 600;
 
-  /// Secret key used for signing and verifying dynamic QR sessions using HMAC-SHA256.
   static const String hmacSecret = 'smart_attendance_hmac_secret_key_2026';
 
   // Pagination / defaults

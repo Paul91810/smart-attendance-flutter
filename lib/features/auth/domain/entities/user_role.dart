@@ -1,5 +1,4 @@
-/// Roles supported in Smart Attendance. Pure Dart enum.
-enum UserRole {
+﻿enum UserRole {
   admin,
   employee;
 

@@ -1,4 +1,4 @@
-import 'package:equatable/equatable.dart';
+﻿import 'package:equatable/equatable.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import '../entities/user.dart';
@@ -17,7 +17,6 @@ class LoginParams extends Equatable {
   List<Object?> get props => [identifier, password];
 }
 
-/// Single-purpose usecase to authenticate credentials and return the authenticated User.
 class LoginUsecase {
   final AuthRepository repository;
 

@@ -1,8 +1,7 @@
-import '../../../../core/error/failures.dart';
+﻿import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import 'qr_validation_rule.dart';
 
-/// Single-responsibility rule verifying that the 60-second time window has not elapsed.
 class ExpiryRule extends QrValidationRule {
   const ExpiryRule();
 

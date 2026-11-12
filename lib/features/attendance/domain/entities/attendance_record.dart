@@ -1,6 +1,5 @@
-import 'package:equatable/equatable.dart';
+﻿import 'package:equatable/equatable.dart';
 
-/// Enum representing check-in or check-out attendance types.
 enum AttendanceType {
   checkIn,
   checkOut;
@@ -21,7 +20,6 @@ enum AttendanceType {
       this == AttendanceType.checkIn ? 'Check In' : 'Check Out';
 }
 
-/// Pure domain entity representing an attendance check-in or check-out record.
 class AttendanceRecord extends Equatable {
   final int? id;
   final String employeeId;

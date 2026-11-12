@@ -1,6 +1,5 @@
-import 'package:equatable/equatable.dart';
+﻿import 'package:equatable/equatable.dart';
 
-/// Pure Dart entity representing high-level attendance KPI counts.
 class DashboardSummary extends Equatable {
   final int totalEmployees;
   final int presentToday;

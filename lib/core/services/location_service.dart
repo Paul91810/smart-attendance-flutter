@@ -1,10 +1,9 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import '../error/failures.dart';
 import '../error/result.dart';
 
-/// Represents captured geographical coordinates and accuracy.
 class UserPosition {
   final double latitude;
   final double longitude;
@@ -17,17 +16,15 @@ class UserPosition {
   });
 
   @override
-  String toString() => 'UserPosition($latitude, $longitude, ±$accuracy m)';
+  String toString() => 'UserPosition($latitude, $longitude, Â±$accuracy m)';
 }
 
-/// Abstract contract for device location services.
 abstract class LocationService {
   Future<Result<LocationFailure, UserPosition>> getCurrentPosition();
   Future<bool> openAppSettings();
   Future<bool> openLocationSettings();
 }
 
-/// Concrete implementation of [LocationService] using the [Geolocator] package.
 class LocationServiceImpl implements LocationService {
   @override
   Future<Result<LocationFailure, UserPosition>> getCurrentPosition() async {

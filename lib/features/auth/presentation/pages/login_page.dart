@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/responsive/responsive_breakpoints.dart';
 import '../../../../core/responsive/responsive_layout.dart';
@@ -10,9 +10,6 @@ import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 import '../widgets/demo_credentials_card.dart';
 
-/// Authentication login page supporting email/employee ID sign-in, validation,
-/// demo credentials auto-fill, and role-based redirection.
-/// Responsive: compact single column, expanded split-screen (branding left, form right).
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 

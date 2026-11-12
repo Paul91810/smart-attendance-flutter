@@ -1,6 +1,4 @@
-/// A functional result type for operations that can either succeed with [R]
-/// or fail with [L]. Pure Dart, no third-party package dependencies required.
-abstract class Result<L, R> {
+﻿abstract class Result<L, R> {
   const Result();
 
   const factory Result.success(R value) = Success<L, R>;

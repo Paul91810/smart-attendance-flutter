@@ -1,8 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../network/connectivity_cubit.dart';
 
-/// App shell banner that displays when device is offline or simulating offline mode.
 class OfflineBanner extends StatelessWidget {
   const OfflineBanner({super.key});
 
@@ -33,8 +32,8 @@ class OfflineBanner extends StatelessWidget {
                 Expanded(
                   child: Text(
                     state.isSimulated
-                        ? 'Simulated Offline Mode — Attendance stored locally & synced online'
-                        : 'Offline Mode — Attendance will be saved locally & synced when online',
+                        ? 'Simulated Offline Mode â€” Attendance stored locally & synced online'
+                        : 'Offline Mode â€” Attendance will be saved locally & synced when online',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: colorScheme.onErrorContainer,
                       fontWeight: FontWeight.w600,

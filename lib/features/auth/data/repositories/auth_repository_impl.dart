@@ -1,4 +1,4 @@
-import '../../../../core/error/exceptions.dart';
+﻿import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import '../../../../core/network/network_info.dart';
@@ -7,8 +7,6 @@ import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_local_datasource.dart';
 import '../datasources/auth_remote_datasource.dart';
 
-/// Repository implementation fulfilling the domain AuthRepository contract.
-/// Coordinates between remote REST API and secure local storage.
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
   final AuthLocalDataSource localDataSource;

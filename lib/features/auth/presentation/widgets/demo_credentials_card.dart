@@ -1,6 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
-/// Interactive helper widget displaying quick-tap demo credentials for assessment reviewers.
 class DemoCredentialsCard extends StatelessWidget {
   final void Function(String identifier, String password) onSelectCredentials;
 

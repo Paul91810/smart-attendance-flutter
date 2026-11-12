@@ -1,7 +1,6 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import '../../domain/entities/qr_session.dart';
 
-/// Data model representing a QR session with JSON serialization and deserialization.
 class QrSessionModel extends QrSession {
   const QrSessionModel({
     required super.sessionId,

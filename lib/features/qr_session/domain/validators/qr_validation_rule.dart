@@ -1,10 +1,9 @@
-import '../../../../core/error/failures.dart';
+﻿import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import '../../../attendance/domain/entities/attendance_record.dart';
 import '../../../auth/domain/entities/user.dart';
 import '../entities/qr_session.dart';
 
-/// Context containing all details needed by QR validation rules to verify an attendance scan.
 class QrValidationContext {
   final QrSession session;
   final User user;
@@ -29,7 +28,6 @@ class QrValidationContext {
   });
 }
 
-/// Abstract Single-Responsibility interface for a QR validation rule (SOLID: S & O).
 abstract class QrValidationRule {
   const QrValidationRule();
 

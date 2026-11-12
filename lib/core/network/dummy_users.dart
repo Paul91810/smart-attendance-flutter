@@ -1,5 +1,4 @@
-/// Represents dummy in-memory user credentials and profile for mock API testing.
-class DummyUser {
+﻿class DummyUser {
   final String id;
   final String employeeId;
   final String name;
@@ -27,7 +26,6 @@ class DummyUser {
   }
 }
 
-/// In-memory store of mock users: 1 Admin + 5 Employees (EMP001..EMP005).
 class DummyUsersStore {
   DummyUsersStore._();
 
@@ -84,7 +82,6 @@ class DummyUsersStore {
     ),
   ];
 
-  /// Find user by email or employeeId (case-insensitive)
   static DummyUser? findByIdentifier(String identifier) {
     final clean = identifier.trim().toLowerCase();
     for (final user in users) {
@@ -96,7 +93,6 @@ class DummyUsersStore {
     return null;
   }
 
-  /// Find user by id
   static DummyUser? findById(String id) {
     for (final user in users) {
       if (user.id == id) return user;

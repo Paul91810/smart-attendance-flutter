@@ -1,4 +1,4 @@
-import 'package:connectivity_plus/connectivity_plus.dart';
+﻿import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 
@@ -51,7 +51,6 @@ import '../network/mock_attendance_store.dart';
 
 final sl = GetIt.instance;
 
-/// Centralized Dependency Injection registry using GetIt.
 Future<void> initDependencies() async {
   // Ensure mock seed data is initialized for first launch
   MockAttendanceStore.seedInitialDataIfEmpty();

@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'package:dio/dio.dart';
@@ -13,9 +13,6 @@ import '../../features/qr_session/domain/validators/qr_validator.dart';
 import 'dummy_users.dart';
 import 'mock_attendance_store.dart';
 
-/// Interceptor that simulates a RESTful backend server with realistic network latency,
-/// standard REST status codes, error handling, in-memory mock user authentication,
-/// dynamic QR session generation, and strict attendance QR validation.
 class MockApiInterceptor extends Interceptor {
   final int latencyMs;
 
@@ -192,7 +189,6 @@ class MockApiInterceptor extends Interceptor {
     );
   }
 
-  /// POST /qr/generate: Admin-only endpoint generating HMAC-SHA256 time-limited dynamic QR sessions.
   void _handleGenerateQrSession(
     RequestOptions options,
     RequestInterceptorHandler handler,
@@ -263,7 +259,6 @@ class MockApiInterceptor extends Interceptor {
     );
   }
 
-  /// POST /attendance/scan: Validates scanned QR payload through composite rules and marks attendance.
   Future<void> _handleAttendanceScan(
     RequestOptions options,
     RequestInterceptorHandler handler,
@@ -415,7 +410,6 @@ class MockApiInterceptor extends Interceptor {
     return respondSuccess(options, handler, data: userRecords);
   }
 
-  /// GET /attendance/me: Returns only the logged-in employee's attendance records.
   void _handleGetMyAttendance(
     RequestOptions options,
     RequestInterceptorHandler handler,
@@ -452,7 +446,6 @@ class MockApiInterceptor extends Interceptor {
     return respondSuccess(options, handler, data: data);
   }
 
-  /// POST /attendance/record: Uploads an offline-recorded attendance item and marks it synced.
   void _handleUploadAttendanceRecord(
     RequestOptions options,
     RequestInterceptorHandler handler,
@@ -542,7 +535,6 @@ class MockApiInterceptor extends Interceptor {
     );
   }
 
-  /// GET /admin/employees: Returns all employees (admin only).
   void _handleGetAdminEmployees(
     RequestOptions options,
     RequestInterceptorHandler handler,
@@ -575,7 +567,6 @@ class MockApiInterceptor extends Interceptor {
     return respondSuccess(options, handler, data: employees);
   }
 
-  /// GET /admin/attendance: Returns filtered attendance records with employee names (admin only).
   void _handleGetAdminAttendance(
     RequestOptions options,
     RequestInterceptorHandler handler,
@@ -634,7 +625,6 @@ class MockApiInterceptor extends Interceptor {
     return respondSuccess(options, handler, data: enrichedRecords);
   }
 
-  /// GET /admin/summary: Computes total employees, present today, and checked out today (admin only).
   void _handleGetAdminSummary(
     RequestOptions options,
     RequestInterceptorHandler handler,

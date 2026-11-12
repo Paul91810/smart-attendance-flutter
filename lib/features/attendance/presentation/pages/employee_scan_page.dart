@@ -1,4 +1,4 @@
-import 'dart:math';
+﻿import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -386,7 +386,6 @@ class _EmployeeScanViewState extends State<_EmployeeScanView> {
     );
   }
 
-  /// Tablet landscape expanded layout (side-by-side scanner and controls)
   Widget _buildExpandedScannerLayout(
     BuildContext context,
     ThemeData theme,
@@ -905,7 +904,6 @@ class _EmployeeScanViewState extends State<_EmployeeScanView> {
     );
   }
 
-  /// Interactive debug simulation sheet allowing complete test coverage on emulator
   void _openDebugSimulationSheet(
     BuildContext parentContext,
     AttendanceType currentType,

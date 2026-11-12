@@ -1,5 +1,4 @@
-/// Base and specific exceptions thrown by data sources.
-class ServerException implements Exception {
+﻿class ServerException implements Exception {
   final String message;
   final String? code;
   final int? statusCode;

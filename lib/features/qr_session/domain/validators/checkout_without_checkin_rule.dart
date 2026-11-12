@@ -1,9 +1,8 @@
-import '../../../../core/error/failures.dart';
+﻿import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import '../../../attendance/domain/entities/attendance_record.dart';
 import 'qr_validation_rule.dart';
 
-/// Single-responsibility rule checking that check-out is only permitted if a check-in occurred previously on the same day.
 class CheckOutWithoutCheckInRule extends QrValidationRule {
   const CheckOutWithoutCheckInRule();
 

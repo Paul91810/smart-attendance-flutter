@@ -1,5 +1,4 @@
-/// Environment and network configuration.
-class AppConfig {
+﻿class AppConfig {
   final bool useMock;
   final String baseUrl;
 

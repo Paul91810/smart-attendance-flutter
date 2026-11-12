@@ -1,8 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'app_colors.dart';
 import 'app_text_styles.dart';
 
-/// Defines Material 3 light and dark themes for Smart Attendance.
 class AppTheme {
   AppTheme._();
 

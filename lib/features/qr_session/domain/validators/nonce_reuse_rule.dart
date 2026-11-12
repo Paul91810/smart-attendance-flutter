@@ -1,8 +1,7 @@
-import '../../../../core/error/failures.dart';
+﻿import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import 'qr_validation_rule.dart';
 
-/// Single-responsibility rule guaranteeing each dynamic QR code can only be used once (replay protection).
 class NonceReuseRule extends QrValidationRule {
   const NonceReuseRule();
 

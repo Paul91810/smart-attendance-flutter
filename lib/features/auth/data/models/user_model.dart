@@ -1,7 +1,6 @@
-import '../../domain/entities/user.dart';
+﻿import '../../domain/entities/user.dart';
 import '../../domain/entities/user_role.dart';
 
-/// Data model representing a user with JSON serialization.
 class UserModel extends User {
   const UserModel({
     required super.id,

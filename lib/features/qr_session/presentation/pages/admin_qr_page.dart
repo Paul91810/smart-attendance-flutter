@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -101,7 +101,6 @@ class _AdminQrBody extends StatelessWidget {
     );
   }
 
-  /// Compact portrait layout: single centered column
   Widget _buildCompactLayout(
     BuildContext context,
     ThemeData theme,
@@ -144,7 +143,6 @@ class _AdminQrBody extends StatelessWidget {
     );
   }
 
-  /// Expanded tablet landscape layout: side-by-side presentation
   Widget _buildExpandedLayout(
     BuildContext context,
     ThemeData theme,

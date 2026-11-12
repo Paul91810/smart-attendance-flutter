@@ -1,5 +1,4 @@
-/// Centralized API endpoint paths.
-class ApiEndpoints {
+﻿class ApiEndpoints {
   ApiEndpoints._();
 
   static const String login = '/auth/login';

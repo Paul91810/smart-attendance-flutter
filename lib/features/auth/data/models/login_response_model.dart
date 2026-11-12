@@ -1,6 +1,5 @@
-import 'user_model.dart';
+﻿import 'user_model.dart';
 
-/// Data model representing response payload from POST /auth/login.
 class LoginResponseModel {
   final String token;
   final UserModel user;

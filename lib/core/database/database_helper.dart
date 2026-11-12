@@ -1,7 +1,6 @@
-import 'package:path/path.dart';
+﻿import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
-/// SQLite database helper managing database lifecycle and table migrations.
 class DatabaseHelper {
   static const String databaseName = 'smart_attendance.db';
   static const int databaseVersion = 1;

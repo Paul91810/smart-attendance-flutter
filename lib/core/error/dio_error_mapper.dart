@@ -1,7 +1,6 @@
-import 'package:dio/dio.dart';
+﻿import 'package:dio/dio.dart';
 import 'failures.dart';
 
-/// Centralized mapper that converts DioExceptions into strongly typed domain Failures.
 class DioErrorMapper {
   DioErrorMapper._();
 

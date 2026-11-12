@@ -1,8 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../error/failures.dart';
 import '../responsive/responsive_breakpoints.dart';
 
-/// Reusable error widget providing clear feedback and a retry mechanism.
 class ErrorView extends StatelessWidget {
   final String title;
   final String message;

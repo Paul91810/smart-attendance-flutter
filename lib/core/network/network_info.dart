@@ -1,13 +1,11 @@
-import 'package:connectivity_plus/connectivity_plus.dart';
+﻿import 'package:connectivity_plus/connectivity_plus.dart';
 import 'mock_attendance_store.dart';
 
-/// Contract for checking internet connectivity.
 abstract class NetworkInfo {
   Future<bool> get isConnected;
   Stream<bool> get onConnectivityChanged;
 }
 
-/// Implementation using connectivity_plus with debug simulation support.
 class NetworkInfoImpl implements NetworkInfo {
   final Connectivity connectivity;
 

@@ -1,7 +1,6 @@
-import 'package:equatable/equatable.dart';
+﻿import 'package:equatable/equatable.dart';
 import '../../../attendance/domain/entities/attendance_record.dart';
 
-/// Pure Dart entity representing an enriched attendance record with employee metadata.
 class AdminAttendanceRecord extends Equatable {
   final int id;
   final String employeeId;

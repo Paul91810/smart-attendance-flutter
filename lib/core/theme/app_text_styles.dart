@@ -1,7 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Centralized typography based on Google Fonts Inter.
 class AppTextStyles {
   AppTextStyles._();
 

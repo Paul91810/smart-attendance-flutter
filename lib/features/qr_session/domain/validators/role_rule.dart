@@ -1,8 +1,7 @@
-import '../../../../core/error/failures.dart';
+﻿import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import 'qr_validation_rule.dart';
 
-/// Single-responsibility rule verifying role permissions (only employees may mark attendance; admins cannot).
 class RoleRule extends QrValidationRule {
   const RoleRule();
 

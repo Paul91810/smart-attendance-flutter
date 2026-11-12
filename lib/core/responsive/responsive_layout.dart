@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'responsive_breakpoints.dart';
 
 typedef ResponsiveWidgetBuilder = Widget Function(
@@ -6,7 +6,6 @@ typedef ResponsiveWidgetBuilder = Widget Function(
   BoxConstraints constraints,
 );
 
-/// Adaptive layout builder supporting Compact (<600), Medium (600-900), and Expanded (>900).
 class ResponsiveLayout extends StatelessWidget {
   final ResponsiveWidgetBuilder? compact;
   final ResponsiveWidgetBuilder? medium;
@@ -51,7 +50,6 @@ class ResponsiveLayout extends StatelessWidget {
   }
 }
 
-/// Helper widget to center and constrain content on wide screens.
 class ResponsiveContent extends StatelessWidget {
   final Widget child;
   final double maxWidth;

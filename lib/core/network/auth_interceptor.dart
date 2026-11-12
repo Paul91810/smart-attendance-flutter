@@ -1,6 +1,5 @@
-import 'package:dio/dio.dart';
+﻿import 'package:dio/dio.dart';
 
-/// Interceptor that attaches JWT Bearer token to outgoing requests and handles 401 logout.
 class AuthInterceptor extends QueuedInterceptor {
   final Future<String?> Function() getToken;
   final void Function()? onUnauthorized;

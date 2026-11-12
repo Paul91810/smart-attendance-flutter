@@ -1,7 +1,6 @@
-import 'package:equatable/equatable.dart';
+﻿import 'package:equatable/equatable.dart';
 import 'user_role.dart';
 
-/// Pure domain entity representing an authenticated user.
 class User extends Equatable {
   final String id;
   final String employeeId;

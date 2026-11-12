@@ -1,7 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
-/// App-wide color palette adhering to Material 3 design system.
-/// Uses a professional deep teal / ocean seed color and standardized status colors.
 class AppColors {
   AppColors._();
 

@@ -1,9 +1,8 @@
-import '../../../../core/error/failures.dart';
+﻿import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import '../entities/attendance_record.dart';
 import '../repositories/attendance_repository.dart';
 
-/// Usecase for retrieving the authenticated employee's attendance records.
 class GetMyAttendanceHistoryUsecase {
   final AttendanceRepository repository;
 
