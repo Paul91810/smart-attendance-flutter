@@ -5,7 +5,6 @@ class DatabaseHelper {
   static const String databaseName = 'smart_attendance.db';
   static const int databaseVersion = 1;
 
-  // Attendance table and columns
   static const String tableAttendance = 'attendance';
   static const String columnId = 'id';
   static const String columnEmployeeId = 'employeeId';
