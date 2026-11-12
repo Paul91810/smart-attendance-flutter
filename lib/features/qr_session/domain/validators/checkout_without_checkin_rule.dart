@@ -37,3 +37,4 @@ class CheckOutWithoutCheckInRule extends QrValidationRule {
     return const Result.success(null);
   }
 }
+

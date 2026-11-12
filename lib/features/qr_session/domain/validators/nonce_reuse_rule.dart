@@ -20,3 +20,4 @@ class NonceReuseRule extends QrValidationRule {
     return const Result.success(null);
   }
 }
+

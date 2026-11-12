@@ -34,3 +34,4 @@ class QrValidator {
     return const Result.success(null);
   }
 }
+

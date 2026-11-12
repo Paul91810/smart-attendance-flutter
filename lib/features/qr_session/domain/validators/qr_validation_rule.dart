@@ -35,3 +35,4 @@ abstract class QrValidationRule {
 
   Future<Result<Failure, void>> validate(QrValidationContext context);
 }
+

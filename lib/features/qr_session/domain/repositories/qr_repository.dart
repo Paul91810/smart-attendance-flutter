@@ -7,3 +7,4 @@ abstract class QrRepository {
   /// Generates a new HMAC-signed, time-limited QR session from the backend.
   Future<Result<Failure, QrSession>> generateSession();
 }
+

@@ -81,3 +81,4 @@ class AttendanceRecord extends Equatable {
   String toString() =>
       'AttendanceRecord(id: $id, employeeId: $employeeId, type: ${type.toTypeString()}, time: $timestamp)';
 }
+

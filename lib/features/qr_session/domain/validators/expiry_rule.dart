@@ -20,3 +20,4 @@ class ExpiryRule extends QrValidationRule {
     return const Result.success(null);
   }
 }
+

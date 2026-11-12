@@ -7,6 +7,7 @@ import '../network/app_config.dart';
 import '../network/auth_interceptor.dart';
 import '../network/dio_client.dart';
 import '../network/network_info.dart';
+import '../services/location_service.dart';
 import '../theme/theme_cubit.dart';
 
 import '../../features/auth/data/datasources/auth_local_datasource.dart';
@@ -18,6 +19,19 @@ import '../../features/auth/domain/usecases/login_usecase.dart';
 import '../../features/auth/domain/usecases/logout_usecase.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 
+import '../../features/qr_session/data/datasources/qr_remote_datasource.dart';
+import '../../features/qr_session/data/repositories/qr_repository_impl.dart';
+import '../../features/qr_session/domain/repositories/qr_repository.dart';
+import '../../features/qr_session/domain/usecases/generate_qr_session_usecase.dart';
+import '../../features/qr_session/presentation/bloc/qr_session_bloc.dart';
+
+import '../../features/attendance/data/datasources/attendance_local_datasource.dart';
+import '../../features/attendance/data/datasources/attendance_remote_datasource.dart';
+import '../../features/attendance/data/repositories/attendance_repository_impl.dart';
+import '../../features/attendance/domain/repositories/attendance_repository.dart';
+import '../../features/attendance/domain/usecases/mark_attendance_usecase.dart';
+import '../../features/attendance/presentation/bloc/attendance_bloc.dart';
+
 final sl = GetIt.instance;
 
 /// Centralized Dependency Injection registry using GetIt.
@@ -26,6 +40,7 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<AppConfig>(() => const AppConfig());
   sl.registerLazySingleton<Connectivity>(() => Connectivity());
   sl.registerLazySingleton<NetworkInfo>(() => NetworkInfoImpl(sl()));
+  sl.registerLazySingleton<LocationService>(() => LocationServiceImpl());
   sl.registerLazySingleton<FlutterSecureStorage>(
     () => const FlutterSecureStorage(
       aOptions: AndroidOptions(encryptedSharedPreferences: true),
@@ -81,6 +96,63 @@ Future<void> initDependencies() async {
       loginUsecase: sl(),
       logoutUsecase: sl(),
       getCurrentUserUsecase: sl(),
+    ),
+  );
+
+  // ===================== QR Session Feature =====================
+  // Data Sources
+  sl.registerLazySingleton<QrRemoteDataSource>(
+    () => QrRemoteDataSourceImpl(dioClient: sl()),
+  );
+
+  // Repositories
+  sl.registerLazySingleton<QrRepository>(
+    () => QrRepositoryImpl(
+      remoteDataSource: sl(),
+      networkInfo: sl(),
+    ),
+  );
+
+  // Use Cases
+  sl.registerLazySingleton<GenerateQrSessionUsecase>(
+    () => GenerateQrSessionUsecase(sl()),
+  );
+
+  // BLoC
+  sl.registerFactory<QrSessionBloc>(
+    () => QrSessionBloc(
+      generateQrSessionUsecase: sl(),
+    ),
+  );
+
+  // ===================== Attendance Feature =====================
+  // Data Sources
+  sl.registerLazySingleton<AttendanceLocalDataSource>(
+    () => AttendanceLocalDataSourceImpl(databaseHelper: sl()),
+  );
+  sl.registerLazySingleton<AttendanceRemoteDataSource>(
+    () => AttendanceRemoteDataSourceImpl(dioClient: sl()),
+  );
+
+  // Repositories
+  sl.registerLazySingleton<AttendanceRepository>(
+    () => AttendanceRepositoryImpl(
+      remoteDataSource: sl(),
+      localDataSource: sl(),
+      networkInfo: sl(),
+    ),
+  );
+
+  // Use Cases
+  sl.registerLazySingleton<MarkAttendanceUsecase>(
+    () => MarkAttendanceUsecase(sl()),
+  );
+
+  // BLoC
+  sl.registerFactory<AttendanceBloc>(
+    () => AttendanceBloc(
+      locationService: sl(),
+      markAttendanceUsecase: sl(),
     ),
   );
 }

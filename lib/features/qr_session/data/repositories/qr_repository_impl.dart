@@ -38,3 +38,4 @@ class QrRepositoryImpl implements QrRepository {
     }
   }
 }
+

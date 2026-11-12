@@ -32,3 +32,4 @@ class DuplicateAttendanceRule extends QrValidationRule {
     return const Result.success(null);
   }
 }
+

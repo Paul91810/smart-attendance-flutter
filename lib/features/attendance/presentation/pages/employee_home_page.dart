@@ -7,6 +7,7 @@ import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../auth/presentation/pages/login_page.dart';
+import 'employee_scan_page.dart';
 
 /// Employee home landing page with personal status, scanning preview, and logout.
 class EmployeeHomePage extends StatelessWidget {
@@ -152,12 +153,12 @@ class EmployeeHomePage extends StatelessWidget {
           icon: Icons.qr_code_scanner,
           title: 'Scan QR Code',
           subtitle: 'Check in or check out with live camera scan and GPS capture',
-          badgeText: 'PHASE 2',
+          badgeText: 'LIVE',
           badgeColor: colorScheme.primary,
           onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Camera QR scanner will be enabled in Phase 2'),
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => EmployeeScanPage(user: user),
               ),
             );
           },

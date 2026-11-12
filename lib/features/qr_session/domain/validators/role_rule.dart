@@ -29,3 +29,4 @@ class RoleRule extends QrValidationRule {
     return const Result.success(null);
   }
 }
+

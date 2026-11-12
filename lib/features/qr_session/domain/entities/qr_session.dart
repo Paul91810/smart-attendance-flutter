@@ -60,3 +60,4 @@ class QrSession extends Equatable {
   @override
   List<Object?> get props => [sessionId, issuedAt, expiresAt, nonce, signature];
 }
+
