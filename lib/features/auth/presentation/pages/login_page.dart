@@ -72,7 +72,7 @@ class _LoginPageState extends State<LoginPage> {
             SnackBar(
               content: Row(
                 children: [
-                  const Icon(Icons.error_outline, color: Colors.white),
+                  Icon(Icons.error_outline, color: colorScheme.onError),
                   const SizedBox(width: 12),
                   Expanded(child: Text(state.message)),
                 ],
@@ -379,12 +379,12 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
             child: isLoading
-                ? const SizedBox(
+                ? SizedBox(
                     height: 20,
                     width: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Colors.white,
+                      color: colorScheme.onPrimary,
                     ),
                   )
                 : const Text(

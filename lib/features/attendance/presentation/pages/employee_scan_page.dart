@@ -7,8 +7,10 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/network/connectivity_cubit.dart';
+import '../../../../core/network/mock_attendance_store.dart';
 import '../../../../core/responsive/responsive_breakpoints.dart';
 import '../../../../core/services/location_service.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../auth/domain/entities/user.dart';
 import '../../../qr_session/domain/entities/qr_session.dart';
 import '../../domain/entities/attendance_record.dart';
@@ -84,15 +86,15 @@ class _EmployeeScanViewState extends State<_EmployeeScanView> {
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: record.synced
-                ? Colors.green.withValues(alpha: 0.15)
-                : Colors.amber.withValues(alpha: 0.15),
+                ? AppColors.success.withValues(alpha: 0.15)
+                : AppColors.warning.withValues(alpha: 0.15),
             shape: BoxShape.circle,
           ),
           child: Icon(
             record.synced
                 ? Icons.check_circle_outline
                 : Icons.cloud_done_outlined,
-            color: record.synced ? Colors.green : Colors.amber.shade800,
+            color: record.synced ? AppColors.success : AppColors.warning,
             size: 48,
           ),
         ),
@@ -553,161 +555,176 @@ class _EmployeeScanViewState extends State<_EmployeeScanView> {
                                   .add(ModeChanged(selection.first));
                             },
                     ),
-                    const SizedBox(height: 20),
-                    // Offline simulation switch in right pane
-                    BlocBuilder<ConnectivityCubit, ConnectivityState>(
-                      builder: (context, connState) {
-                        return Card(
-                          elevation: 0,
-                          color: connState.isOffline
-                              ? colorScheme.errorContainer.withValues(alpha: 0.3)
-                              : colorScheme.surfaceContainerHighest,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            side: BorderSide(
-                              color: connState.isOffline
-                                  ? colorScheme.error.withValues(alpha: 0.5)
-                                  : colorScheme.outlineVariant,
-                            ),
-                          ),
-                          child: SwitchListTile(
-                            secondary: Icon(
-                              connState.isOffline
-                                  ? Icons.wifi_off_rounded
-                                  : Icons.wifi_rounded,
-                              color: connState.isOffline
-                                  ? colorScheme.error
-                                  : colorScheme.primary,
-                            ),
-                            title: Text(
-                              'Simulate Offline Mode',
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
+                    if (kDebugMode) ...[
+                      const SizedBox(height: 16),
+                      // Offline simulation switch in right pane
+                      BlocBuilder<ConnectivityCubit, ConnectivityState>(
+                        builder: (context, connState) {
+                          return Card(
+                            elevation: 0,
+                            color: connState.isOffline
+                                ? colorScheme.errorContainer.withValues(alpha: 0.3)
+                                : colorScheme.surfaceContainerHighest,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(
+                                color: connState.isOffline
+                                    ? colorScheme.error.withValues(alpha: 0.5)
+                                    : colorScheme.outlineVariant,
                               ),
                             ),
-                            subtitle: Text(
-                              connState.isOffline
-                                  ? 'Offline active: Saves to SQLite locally'
-                                  : 'Online active: Verifies with server API',
-                              style: theme.textTheme.bodySmall,
+                            child: SwitchListTile(
+                              secondary: Icon(
+                                connState.isOffline
+                                    ? Icons.wifi_off_rounded
+                                    : Icons.wifi_rounded,
+                                color: connState.isOffline
+                                    ? colorScheme.error
+                                    : colorScheme.primary,
+                              ),
+                              title: Text(
+                                'Simulate Offline Mode',
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              subtitle: Text(
+                                connState.isOffline
+                                    ? 'Offline active: Saves to SQLite locally'
+                                    : 'Online active: Verifies with server API',
+                                style: theme.textTheme.bodySmall,
+                              ),
+                              value: connState.isOffline,
+                              onChanged: (val) {
+                                context
+                                    .read<ConnectivityCubit>()
+                                    .setSimulateOffline(val);
+                              },
                             ),
-                            value: connState.isOffline,
-                            onChanged: (val) {
-                              context
-                                  .read<ConnectivityCubit>()
-                                  .setSimulateOffline(val);
-                            },
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    // Sync status & action if pending
-                    BlocBuilder<SyncCubit, SyncState>(
-                      builder: (context, syncState) {
-                        if (syncState.pendingCount == 0) {
-                          return const SizedBox.shrink();
-                        }
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16.0),
-                          child: FilledButton.tonalIcon(
-                            onPressed: syncState is SyncInProgress
-                                ? null
-                                : () =>
-                                    context.read<SyncCubit>().syncRecords(),
-                            icon: syncState is SyncInProgress
-                                ? const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2),
-                                  )
-                                : const Icon(Icons.sync_rounded),
-                            label: Text(
-                              syncState is SyncInProgress
-                                  ? 'Syncing...'
-                                  : 'Sync Now (${syncState.pendingCount} pending)',
-                            ),
-                            style: FilledButton.styleFrom(
-                              minimumSize: const Size.fromHeight(44),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    // Debug simulation shortcuts
-                    Text(
-                      'Simulation Scenarios',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
+                          );
+                        },
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        ActionChip(
-                          avatar: const Icon(Icons.check,
-                              size: 16, color: Colors.green),
-                          label: const Text('Valid QR'),
-                          onPressed: isProcessing
-                              ? null
-                              : () {
-                                  final p = _generateTestPayload(
-                                      isExpired: false, isTampered: false);
-                                  context
-                                      .read<AttendanceBloc>()
-                                      .add(ScanReceived(p));
-                                },
+                      const SizedBox(height: 8),
+                      // Server Error (500) simulation switch
+                      StatefulBuilder(
+                        builder: (context, setTileState) {
+                          return Card(
+                            elevation: 0,
+                            color: MockAttendanceStore.simulateServerError
+                                ? colorScheme.errorContainer.withValues(alpha: 0.3)
+                                : colorScheme.surfaceContainerHighest,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(
+                                color: MockAttendanceStore.simulateServerError
+                                    ? colorScheme.error.withValues(alpha: 0.5)
+                                    : colorScheme.outlineVariant,
+                              ),
+                            ),
+                            child: SwitchListTile(
+                              secondary: Icon(
+                                Icons.cloud_off_rounded,
+                                color: MockAttendanceStore.simulateServerError
+                                    ? colorScheme.error
+                                    : colorScheme.primary,
+                              ),
+                              title: Text(
+                                'Simulate Server Error (500)',
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              subtitle: Text(
+                                MockAttendanceStore.simulateServerError
+                                    ? 'API returns 500 SIMULATED_500 failure'
+                                    : 'API returns normal responses',
+                                style: theme.textTheme.bodySmall,
+                              ),
+                              value: MockAttendanceStore.simulateServerError,
+                              onChanged: (val) {
+                                setTileState(() {
+                                  MockAttendanceStore.simulateServerError = val;
+                                });
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      // Debug simulation shortcuts
+                      Text(
+                        'Simulation Scenarios',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
                         ),
-                        ActionChip(
-                          avatar: Icon(Icons.timer_off,
-                              size: 16, color: colorScheme.error),
-                          label: const Text('Expired QR'),
-                          onPressed: isProcessing
-                              ? null
-                              : () {
-                                  final p = _generateTestPayload(
-                                      isExpired: true, isTampered: false);
-                                  context
-                                      .read<AttendanceBloc>()
-                                      .add(ScanReceived(p));
-                                },
-                        ),
-                        ActionChip(
-                          avatar: Icon(Icons.gavel,
-                              size: 16, color: colorScheme.error),
-                          label: const Text('Tampered QR'),
-                          onPressed: isProcessing
-                              ? null
-                              : () {
-                                  final p = _generateTestPayload(
-                                      isExpired: false, isTampered: true);
-                                  context
-                                      .read<AttendanceBloc>()
-                                      .add(ScanReceived(p));
-                                },
-                        ),
-                        ActionChip(
-                          avatar: Icon(Icons.replay,
-                              size: 16, color: Colors.amber.shade800),
-                          label: const Text('Reused Nonce'),
-                          onPressed: isProcessing
-                              ? null
-                              : () {
-                                  final p = _generateTestPayload(
-                                    isExpired: false,
-                                    isTampered: false,
-                                    fixedNonce: 'reused-nonce-static-12345',
-                                  );
-                                  context
-                                      .read<AttendanceBloc>()
-                                      .add(ScanReceived(p));
-                                },
-                        ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          ActionChip(
+                            avatar: const Icon(Icons.check,
+                                size: 16, color: AppColors.success),
+                            label: const Text('Valid QR'),
+                            onPressed: isProcessing
+                                ? null
+                                : () {
+                                    final p = _generateTestPayload(
+                                        isExpired: false, isTampered: false);
+                                    context
+                                        .read<AttendanceBloc>()
+                                        .add(ScanReceived(p));
+                                  },
+                          ),
+                          ActionChip(
+                            avatar: Icon(Icons.timer_off,
+                                size: 16, color: colorScheme.error),
+                            label: const Text('Expired QR'),
+                            onPressed: isProcessing
+                                ? null
+                                : () {
+                                    final p = _generateTestPayload(
+                                        isExpired: true, isTampered: false);
+                                    context
+                                        .read<AttendanceBloc>()
+                                        .add(ScanReceived(p));
+                                  },
+                          ),
+                          ActionChip(
+                            avatar: Icon(Icons.gavel,
+                                size: 16, color: colorScheme.error),
+                            label: const Text('Tampered QR'),
+                            onPressed: isProcessing
+                                ? null
+                                : () {
+                                    final p = _generateTestPayload(
+                                        isExpired: false, isTampered: true);
+                                    context
+                                        .read<AttendanceBloc>()
+                                        .add(ScanReceived(p));
+                                  },
+                          ),
+                          ActionChip(
+                            avatar: const Icon(Icons.replay,
+                                size: 16, color: AppColors.warning),
+                            label: const Text('Reused Nonce'),
+                            onPressed: isProcessing
+                                ? null
+                                : () {
+                                    final p = _generateTestPayload(
+                                      isExpired: false,
+                                      isTampered: false,
+                                      fixedNonce: 'reused-nonce-static-12345',
+                                    );
+                                    context
+                                        .read<AttendanceBloc>()
+                                        .add(ScanReceived(p));
+                                  },
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -957,14 +974,36 @@ class _EmployeeScanViewState extends State<_EmployeeScanView> {
                     );
                   },
                 ),
+                StatefulBuilder(
+                  builder: (context, setSheetState) {
+                    return SwitchListTile(
+                      secondary: Icon(
+                        Icons.cloud_off_rounded,
+                        color: MockAttendanceStore.simulateServerError
+                            ? colorScheme.error
+                            : colorScheme.primary,
+                      ),
+                      title: const Text('Simulate Server Error (500)'),
+                      subtitle: Text(MockAttendanceStore.simulateServerError
+                          ? 'Server returns 500 SIMULATED_500 failure'
+                          : 'Server returns normal HTTP 200 responses'),
+                      value: MockAttendanceStore.simulateServerError,
+                      onChanged: (val) {
+                        setSheetState(() {
+                          MockAttendanceStore.simulateServerError = val;
+                        });
+                      },
+                    );
+                  },
+                ),
                 const Divider(),
                 const SizedBox(height: 8),
 
                 // Scenario 1: Valid QR
                 ListTile(
                   leading: const CircleAvatar(
-                    backgroundColor: Colors.green,
-                    child: Icon(Icons.check, color: Colors.white),
+                    backgroundColor: AppColors.success,
+                    child: Icon(Icons.check, color: AppColors.onSuccess),
                   ),
                   title: const Text('Simulate Valid QR'),
                   subtitle: const Text('Fresh session with valid HMAC signature'),
@@ -1007,9 +1046,9 @@ class _EmployeeScanViewState extends State<_EmployeeScanView> {
 
                 // Scenario 4: Reused Nonce
                 ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: Colors.amber.shade700,
-                    child: const Icon(Icons.replay, color: Colors.white),
+                  leading: const CircleAvatar(
+                    backgroundColor: AppColors.warning,
+                    child: Icon(Icons.replay, color: AppColors.onWarning),
                   ),
                   title: const Text('Simulate Reused Nonce'),
                   subtitle: const Text('Submits fixed nonce: triggers QR_ALREADY_USED on 2nd attempt'),

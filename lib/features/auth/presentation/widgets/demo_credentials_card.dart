@@ -29,11 +29,13 @@ class DemoCredentialsCard extends StatelessWidget {
                   color: colorScheme.primary,
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  'Demo Credentials (Tap to Auto-fill)',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.w600,
+                Expanded(
+                  child: Text(
+                    'Demo Credentials (Tap to Auto-fill)',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
