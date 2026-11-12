@@ -24,7 +24,7 @@ dependencies:
   flutter_secure_storage: ^9.2.2
 
   # Hardware & Device
-  mobile_scanner: ^6.0.4
+  mobile_scanner: ^7.5.0
   qr_flutter: ^4.1.0
   geolocator: ^13.0.2
   connectivity_plus: ^6.1.0
