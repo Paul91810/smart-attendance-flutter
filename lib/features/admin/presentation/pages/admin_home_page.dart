@@ -7,6 +7,7 @@ import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../auth/presentation/pages/login_page.dart';
+import '../../../qr_session/presentation/pages/admin_qr_page.dart';
 
 /// Admin dashboard landing page with role-based features and logout.
 class AdminHomePage extends StatelessWidget {
@@ -151,13 +152,11 @@ class AdminHomePage extends StatelessWidget {
           icon: Icons.qr_code_2,
           title: 'Generate Time-Limited QR',
           subtitle: 'Phase 2: Dynamic HMAC-signed 60s rotating QR code',
-          badgeText: 'PHASE 2',
-          badgeColor: colorScheme.tertiary,
+          badgeText: 'LIVE',
+          badgeColor: colorScheme.primary,
           onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Dynamic QR generation will be enabled in Phase 2'),
-              ),
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const AdminQrPage()),
             );
           },
         ),
